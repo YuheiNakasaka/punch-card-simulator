@@ -3,16 +3,16 @@
 // Rows: 12, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
 // Row indices: 0=row12, 1=row11, 2=row0, 3=row1, ... 11=row9
 
-export const ROW_LABELS = ['12', '11', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+export const ROW_LABELS: string[] = ['12', '11', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 // Map row label to index
-export const ROW_INDEX = {
+export const ROW_INDEX: Record<string, number> = {
   '12': 0, '11': 1, '0': 2, '1': 3, '2': 4, '3': 5,
   '4': 6, '5': 7, '6': 8, '7': 9, '8': 10, '9': 11
 };
 
 // IBM 029 encoding: character -> array of row labels that get punched
-export const CHAR_TO_PUNCHES = {
+export const CHAR_TO_PUNCHES: Record<string, string[]> = {
   // Letters A-I: zone 12 + digit 1-9
   'A': ['12', '1'], 'B': ['12', '2'], 'C': ['12', '3'],
   'D': ['12', '4'], 'E': ['12', '5'], 'F': ['12', '6'],
@@ -59,19 +59,17 @@ export const CHAR_TO_PUNCHES = {
 
 // Build reverse map: punch pattern -> character
 // Key is sorted row labels joined by ','
-const _punchesToChar = {};
+const _punchesToChar: Record<string, string> = {};
 for (const [char, punches] of Object.entries(CHAR_TO_PUNCHES)) {
   const key = [...punches].sort().join(',');
   _punchesToChar[key] = char;
 }
-export const PUNCHES_TO_CHAR = _punchesToChar;
+export const PUNCHES_TO_CHAR: Record<string, string> = _punchesToChar;
 
 /**
  * Encode a character to an array of row indices (0-11)
- * @param {string} char - single character
- * @returns {number[]} array of row indices to punch
  */
-export function encodeChar(char) {
+export function encodeChar(char: string): number[] | null {
   const upper = char.toUpperCase();
   const punches = CHAR_TO_PUNCHES[upper];
   if (!punches) return null;
@@ -80,10 +78,8 @@ export function encodeChar(char) {
 
 /**
  * Decode row indices back to a character
- * @param {number[]} rowIndices - array of punched row indices (0-11)
- * @returns {string} decoded character or '' if no match
  */
-export function decodeRows(rowIndices) {
+export function decodeRows(rowIndices: number[]): string {
   if (rowIndices.length === 0) return ' ';
   const labels = rowIndices.map(i => ROW_LABELS[i]);
   const key = [...labels].sort().join(',');
@@ -92,9 +88,8 @@ export function decodeRows(rowIndices) {
 
 /**
  * Get all supported characters for reference display
- * @returns {Array<{char: string, punches: string[]}>}
  */
-export function getAllEncodings() {
+export function getAllEncodings(): Array<{ char: string; punches: string[] }> {
   return Object.entries(CHAR_TO_PUNCHES)
     .filter(([ch]) => ch !== ' ')
     .map(([char, punches]) => ({ char, punches }));

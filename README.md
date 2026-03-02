@@ -2,21 +2,19 @@
 
 IBM 80列パンチカードによるプログラミングを体験できるインタラクティブなWebアプリケーション。
 
-![Screenshot](/.claude/tmp/screenshots/punchcard-countdown.png)
-
 ## 起動方法
 
-ブラウザで `index.html` を直接開くだけで動作します。ビルドツールやフレームワークは不要です。
-
 ```bash
-open index.html
+npm install
+npm run dev
+# http://localhost:5173 にアクセス
 ```
 
-ローカルサーバーを使う場合：
+### その他のコマンド
 
 ```bash
-python3 -m http.server 8765
-# http://localhost:8765 にアクセス
+npm run build     # 本番ビルド (dist/ に出力)
+npm run preview   # ビルド結果のプレビュー
 ```
 
 ## 機能
@@ -64,34 +62,38 @@ python3 -m http.server 8765
 
 ## 技術スタック
 
-- Vanilla HTML / CSS / JavaScript (ES Modules)
-- ビルドツール・フレームワーク依存なし
-- IBM Plex Mono フォント（Google Fonts）
+- **Vite** — 開発サーバー / ビルドツール
+- **TypeScript** — strict モード
+- **IBM Plex Mono** フォント（Google Fonts）
+- フレームワーク依存なし（Vanilla DOM 操作）
 
 ## ファイル構成
 
 ```
-acme/
-├── index.html        # アプリシェル
-├── css/
-│   └── style.css     # レトロ IBM 風スタイル
-└── js/
-    ├── app.js        # アプリ初期化・状態管理
-    ├── encoding.js   # IBM 029 文字エンコーディング
-    ├── card.js       # PunchCard データモデル
-    ├── deck.js       # CardDeck 管理
-    ├── renderer.js   # カードグリッド DOM 描画
-    ├── keyboard.js   # キーボード入力ハンドラ
-    ├── interpreter.js # 命令インタープリタ
-    └── tutorial.js   # チュートリアル・教育コンテンツ
+punch-card-simulator/
+├── index.html          # アプリシェル
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── src/
+│   ├── main.ts         # エントリポイント (CSS import + bootstrap)
+│   ├── app.ts          # アプリ初期化・状態管理
+│   ├── encoding.ts     # IBM 029 文字エンコーディング
+│   ├── card.ts         # PunchCard データモデル
+│   ├── deck.ts         # CardDeck 管理
+│   ├── renderer.ts     # カードグリッド DOM 描画
+│   ├── keyboard.ts     # キーボード入力ハンドラ
+│   ├── interpreter.ts  # 命令インタープリタ
+│   ├── tutorial.ts     # チュートリアル・サンプルプログラム
+│   └── style.css       # レトロ IBM 風スタイル
+└── dist/               # ビルド出力 (git 管理外)
 ```
 
-## デプロイ (Cloudflare Pages)
+## デプロイ
 
-静的サイトとしてそのままデプロイ可能です。
+### Cloudflare Pages
 
 ```bash
-wrangler pages deploy acme/
+npm run build
+wrangler pages deploy dist/
 ```
-
-またはCloudflareダッシュボードからドラッグ＆ドロップでデプロイできます。

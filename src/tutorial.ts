@@ -1,9 +1,6 @@
-import { getAllEncodings, ROW_LABELS } from './encoding.js';
+import { getAllEncodings, ROW_LABELS } from './encoding';
 
-/**
- * Render the encoding reference table
- */
-export function renderEncodingTable(container) {
+export function renderEncodingTable(container: HTMLElement): void {
   container.innerHTML = '';
 
   const intro = document.createElement('p');
@@ -28,15 +25,13 @@ export function renderEncodingTable(container) {
   const tbody = document.createElement('tbody');
   const encodings = getAllEncodings();
 
-  // Group: Letters, Digits, Special
-  const groups = [
+  const groups: Array<{ label: string; items: Array<{ char: string; punches: string[] }> }> = [
     { label: 'Letters', items: encodings.filter(e => /^[A-Z]$/.test(e.char)) },
     { label: 'Digits', items: encodings.filter(e => /^[0-9]$/.test(e.char)) },
     { label: 'Special', items: encodings.filter(e => !/^[A-Z0-9]$/.test(e.char)) },
   ];
 
   for (const group of groups) {
-    // Group header
     const groupRow = document.createElement('tr');
     groupRow.className = 'group-header';
     const groupTd = document.createElement('td');
@@ -56,7 +51,7 @@ export function renderEncodingTable(container) {
         const td = document.createElement('td');
         if (punches.includes(rowLabel)) {
           td.className = 'punch-mark';
-          td.textContent = '\u2588'; // block char
+          td.textContent = '\u2588';
         }
         tr.appendChild(td);
       }
@@ -68,13 +63,10 @@ export function renderEncodingTable(container) {
   container.appendChild(table);
 }
 
-/**
- * Render the tutorial content
- */
-export function renderTutorial(container) {
+export function renderTutorial(container: HTMLElement): void {
   container.innerHTML = '';
 
-  const sections = [
+  const sections: Array<{ title: string; content: string }> = [
     {
       title: 'What is a Punch Card?',
       content: `<p>Punch cards were the primary way to input programs into computers from the 1890s through the 1970s.
@@ -162,10 +154,7 @@ export function renderTutorial(container) {
   }
 }
 
-/**
- * Example programs
- */
-export const EXAMPLES = {
+export const EXAMPLES: Record<string, string[]> = {
   'Hello World': [
     'PRT HELLO WORLD',
     'END',

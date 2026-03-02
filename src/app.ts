@@ -1,10 +1,22 @@
-import { CardDeck } from './deck.js';
-import { CardRenderer, renderCardThumbnail } from './renderer.js';
-import { KeyboardHandler } from './keyboard.js';
-import { Interpreter } from './interpreter.js';
-import { renderEncodingTable, renderTutorial, EXAMPLES } from './tutorial.js';
+import { CardDeck } from './deck';
+import { CardRenderer, renderCardThumbnail } from './renderer';
+import { KeyboardHandler } from './keyboard';
+import { Interpreter } from './interpreter';
+import { renderEncodingTable, renderTutorial, EXAMPLES } from './tutorial';
 
-class App {
+function getElementById(id: string): HTMLElement {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`Element #${id} not found`);
+  return el;
+}
+
+export class App {
+  deck: CardDeck;
+  interpreter: Interpreter;
+  renderer: CardRenderer | null;
+  keyboard: KeyboardHandler | null;
+  private _autoSaveTimer: ReturnType<typeof setTimeout> | null;
+
   constructor() {
     this.deck = new CardDeck();
     this.interpreter = new Interpreter();
@@ -13,16 +25,16 @@ class App {
     this._autoSaveTimer = null;
   }
 
-  init() {
+  init(): void {
     // Initialize renderer
-    const cardContainer = document.getElementById('card-container');
+    const cardContainer = getElementById('card-container');
     this.renderer = new CardRenderer(cardContainer);
 
     // Cell click handler
-    this.renderer.onCellClick = (col, row) => {
+    this.renderer.onCellClick = (col: number, row: number) => {
       this.deck.currentCard.toggle(col, row);
-      this.renderer.render(this.deck.currentCard);
-      this.keyboard.setCursor(col);
+      this.renderer!.render(this.deck.currentCard);
+      this.keyboard!.setCursor(col);
       this._updateDeckOverview();
       this._scheduleSave();
     };
@@ -30,11 +42,11 @@ class App {
     // Initialize keyboard
     this.keyboard = new KeyboardHandler({
       getCard: () => this.deck.currentCard,
-      onCursorMove: (col) => {
-        this.renderer.updateCursor(col);
+      onCursorMove: (col: number) => {
+        this.renderer!.updateCursor(col);
       },
-      onColumnChanged: (col) => {
-        this.renderer.render(this.deck.currentCard);
+      onColumnChanged: (_col: number) => {
+        this.renderer!.render(this.deck.currentCard);
         this._updateDeckOverview();
         this._scheduleSave();
       },
@@ -44,7 +56,7 @@ class App {
         } else {
           this.deck.next();
         }
-        this.keyboard.setCursor(0);
+        this.keyboard!.setCursor(0);
         this._updateAll();
       },
     });
@@ -69,25 +81,23 @@ class App {
     this._buildExamplesDropdown();
 
     // Render static content
-    renderTutorial(document.getElementById('tab-tutorial'));
-    renderEncodingTable(document.getElementById('tab-reference'));
+    renderTutorial(getElementById('tab-tutorial'));
+    renderEncodingTable(getElementById('tab-reference'));
 
     // Try to load saved deck
-    if (!this.deck.load()) {
-      // No saved data, start fresh
-    }
+    this.deck.load();
 
     // Initial render
     this._updateAll();
 
     // Focus for keyboard
-    document.getElementById('card-container').setAttribute('tabindex', '0');
+    getElementById('card-container').setAttribute('tabindex', '0');
   }
 
-  _setupInterpreter() {
-    const output = document.getElementById('terminal-output');
+  private _setupInterpreter(): void {
+    const output = getElementById('terminal-output');
 
-    this.interpreter.onOutput = (text) => {
+    this.interpreter.onOutput = (text: string) => {
       const line = document.createElement('div');
       line.className = 'terminal-line';
       line.textContent = `> ${text}`;
@@ -95,17 +105,17 @@ class App {
       output.scrollTop = output.scrollHeight;
     };
 
-    this.interpreter.onInput = (varName, callback) => {
-      const inputArea = document.getElementById('terminal-input-area');
-      const inputField = document.getElementById('terminal-input');
-      const inputLabel = document.getElementById('terminal-input-label');
+    this.interpreter.onInput = (varName: string, callback: (value: string) => void) => {
+      const inputArea = getElementById('terminal-input-area');
+      const inputField = getElementById('terminal-input') as HTMLInputElement;
+      const inputLabel = getElementById('terminal-input-label');
 
       inputLabel.textContent = `Enter value for ${varName}:`;
       inputArea.classList.remove('hidden');
       inputField.value = '';
       inputField.focus();
 
-      const handler = (e) => {
+      const handler = (e: KeyboardEvent) => {
         if (e.key === 'Enter') {
           const value = inputField.value;
           inputField.removeEventListener('keydown', handler);
@@ -122,14 +132,13 @@ class App {
       inputField.addEventListener('keydown', handler);
     };
 
-    this.interpreter.onStep = (pc, line) => {
-      // Highlight current card during execution
+    this.interpreter.onStep = (pc: number, _line: string) => {
       if (pc < this.deck.length) {
         this.deck.goTo(pc);
       }
     };
 
-    this.interpreter.onFinish = (message) => {
+    this.interpreter.onFinish = (message: string) => {
       const line = document.createElement('div');
       line.className = 'terminal-line system';
       line.textContent = `--- ${message} ---`;
@@ -139,75 +148,73 @@ class App {
     };
   }
 
-  _bindToolbar() {
-    // Deck navigation
-    document.getElementById('btn-prev').addEventListener('click', () => {
+  private _bindToolbar(): void {
+    getElementById('btn-prev').addEventListener('click', () => {
       this.deck.prev();
-      this.keyboard.setCursor(0);
+      this.keyboard!.setCursor(0);
     });
 
-    document.getElementById('btn-next').addEventListener('click', () => {
+    getElementById('btn-next').addEventListener('click', () => {
       if (this.deck.currentIndex === this.deck.length - 1) {
         this.deck.appendCard();
       } else {
         this.deck.next();
       }
-      this.keyboard.setCursor(0);
+      this.keyboard!.setCursor(0);
     });
 
-    document.getElementById('btn-add').addEventListener('click', () => {
+    getElementById('btn-add').addEventListener('click', () => {
       this.deck.addCard();
-      this.keyboard.setCursor(0);
+      this.keyboard!.setCursor(0);
     });
 
-    document.getElementById('btn-remove').addEventListener('click', () => {
+    getElementById('btn-remove').addEventListener('click', () => {
       this.deck.removeCurrentCard();
-      this.keyboard.setCursor(0);
+      this.keyboard!.setCursor(0);
     });
 
-    document.getElementById('btn-clear-card').addEventListener('click', () => {
+    getElementById('btn-clear-card').addEventListener('click', () => {
       this.deck.currentCard.clearAll();
-      this.keyboard.setCursor(0);
+      this.keyboard!.setCursor(0);
       this._updateAll();
       this._scheduleSave();
     });
 
-    document.getElementById('btn-clear-deck').addEventListener('click', () => {
+    getElementById('btn-clear-deck').addEventListener('click', () => {
       if (confirm('Clear all cards in the deck?')) {
         this.deck.clearDeck();
-        this.keyboard.setCursor(0);
+        this.keyboard!.setCursor(0);
       }
     });
 
-    // Execution buttons
-    document.getElementById('btn-run').addEventListener('click', () => {
+    getElementById('btn-run').addEventListener('click', () => {
       this._runProgram();
     });
 
-    document.getElementById('btn-step').addEventListener('click', () => {
+    getElementById('btn-step').addEventListener('click', () => {
       this._stepProgram();
     });
 
-    document.getElementById('btn-reset').addEventListener('click', () => {
+    getElementById('btn-reset').addEventListener('click', () => {
       this._resetProgram();
     });
   }
 
-  _bindTabs() {
+  private _bindTabs(): void {
     const tabs = document.querySelectorAll('.tab-btn');
     const panels = document.querySelectorAll('.tab-panel');
 
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
-        const target = tab.dataset.tab;
+        const target = (tab as HTMLElement).dataset.tab;
         tabs.forEach(t => t.classList.toggle('active', t === tab));
         panels.forEach(p => p.classList.toggle('active', p.id === `tab-${target}`));
       });
     });
   }
 
-  _buildExamplesDropdown() {
-    const select = document.getElementById('examples-select');
+  private _buildExamplesDropdown(): void {
+    const select = getElementById('examples-select') as HTMLSelectElement;
     select.innerHTML = '<option value="">Load Example...</option>';
     for (const name of Object.keys(EXAMPLES)) {
       const opt = document.createElement('option');
@@ -219,14 +226,14 @@ class App {
       const name = select.value;
       if (name && EXAMPLES[name]) {
         this.deck.loadProgram(EXAMPLES[name]);
-        this.keyboard.setCursor(0);
+        this.keyboard!.setCursor(0);
         this._resetProgram();
         select.value = '';
       }
     });
   }
 
-  _runProgram() {
+  private _runProgram(): void {
     if (!this.interpreter.running && !this.interpreter.waitingForInput) {
       const lines = this.deck.readAllText();
       this.interpreter.load(lines);
@@ -236,7 +243,7 @@ class App {
     }
   }
 
-  _stepProgram() {
+  private _stepProgram(): void {
     if (!this.interpreter.running && !this.interpreter.waitingForInput) {
       if (this.interpreter.pc === 0 && this.interpreter.stepCount === 0) {
         const lines = this.deck.readAllText();
@@ -248,61 +255,53 @@ class App {
     }
   }
 
-  _resetProgram() {
+  private _resetProgram(): void {
     this.interpreter.reset();
     this._clearTerminal();
     this._updateRunButtons();
-    document.getElementById('terminal-input-area').classList.add('hidden');
+    getElementById('terminal-input-area').classList.add('hidden');
   }
 
-  _clearTerminal() {
-    document.getElementById('terminal-output').innerHTML = '';
+  private _clearTerminal(): void {
+    getElementById('terminal-output').innerHTML = '';
   }
 
-  _updateRunButtons() {
+  private _updateRunButtons(): void {
     const running = this.interpreter.running;
-    document.getElementById('btn-run').disabled = running;
-    document.getElementById('btn-step').disabled = running;
+    (getElementById('btn-run') as HTMLButtonElement).disabled = running;
+    (getElementById('btn-step') as HTMLButtonElement).disabled = running;
   }
 
-  _updateAll() {
-    // Render current card
-    this.renderer.render(this.deck.currentCard);
+  private _updateAll(): void {
+    this.renderer!.render(this.deck.currentCard);
 
-    // Update card counter
-    document.getElementById('card-counter').textContent =
+    getElementById('card-counter').textContent =
       `Card ${this.deck.currentIndex + 1} of ${this.deck.length}`;
 
-    // Update prev/next button states
-    document.getElementById('btn-prev').disabled = this.deck.currentIndex === 0;
+    (getElementById('btn-prev') as HTMLButtonElement).disabled = this.deck.currentIndex === 0;
 
-    // Update deck overview
     this._updateDeckOverview();
   }
 
-  _updateDeckOverview() {
-    const container = document.getElementById('deck-overview');
+  private _updateDeckOverview(): void {
+    const container = getElementById('deck-overview');
     container.innerHTML = '';
     for (let i = 0; i < this.deck.length; i++) {
       const thumb = renderCardThumbnail(this.deck.cards[i], i, i === this.deck.currentIndex);
       thumb.addEventListener('click', () => {
         this.deck.goTo(i);
-        this.keyboard.setCursor(0);
+        this.keyboard!.setCursor(0);
       });
       container.appendChild(thumb);
     }
   }
 
-  _scheduleSave() {
-    clearTimeout(this._autoSaveTimer);
+  private _scheduleSave(): void {
+    if (this._autoSaveTimer !== null) {
+      clearTimeout(this._autoSaveTimer);
+    }
     this._autoSaveTimer = setTimeout(() => {
       this.deck.save();
     }, 500);
   }
 }
-
-// Bootstrap
-document.addEventListener('DOMContentLoaded', () => {
-  const app = new App();
-  app.init();
-});

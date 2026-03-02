@@ -1,43 +1,35 @@
-import { PunchCard } from './card.js';
+import { PunchCard, PunchCardJSON } from './card';
 
-const STORAGE_KEY = 'punchcard-deck';
+const STORAGE_KEY = 'punchcard-deck' as const;
 
 export class CardDeck {
+  cards: PunchCard[];
+  currentIndex: number;
+  private _onChange: (() => void) | null;
+
   constructor() {
     this.cards = [new PunchCard()];
     this.currentIndex = 0;
     this._onChange = null;
   }
 
-  /**
-   * Set a callback that fires when the deck changes
-   */
-  set onChange(fn) {
+  set onChange(fn: (() => void) | null) {
     this._onChange = fn;
   }
 
-  _notify() {
+  private _notify(): void {
     if (this._onChange) this._onChange();
   }
 
-  /**
-   * Get the currently active card
-   */
-  get currentCard() {
+  get currentCard(): PunchCard {
     return this.cards[this.currentIndex];
   }
 
-  /**
-   * Get total number of cards
-   */
-  get length() {
+  get length(): number {
     return this.cards.length;
   }
 
-  /**
-   * Navigate to the next card
-   */
-  next() {
+  next(): boolean {
     if (this.currentIndex < this.cards.length - 1) {
       this.currentIndex++;
       this._notify();
@@ -46,10 +38,7 @@ export class CardDeck {
     return false;
   }
 
-  /**
-   * Navigate to the previous card
-   */
-  prev() {
+  prev(): boolean {
     if (this.currentIndex > 0) {
       this.currentIndex--;
       this._notify();
@@ -58,10 +47,7 @@ export class CardDeck {
     return false;
   }
 
-  /**
-   * Go to a specific card index
-   */
-  goTo(index) {
+  goTo(index: number): boolean {
     if (index >= 0 && index < this.cards.length) {
       this.currentIndex = index;
       this._notify();
@@ -70,10 +56,7 @@ export class CardDeck {
     return false;
   }
 
-  /**
-   * Add a new blank card after the current card
-   */
-  addCard() {
+  addCard(): PunchCard {
     const card = new PunchCard();
     this.cards.splice(this.currentIndex + 1, 0, card);
     this.currentIndex++;
@@ -81,10 +64,7 @@ export class CardDeck {
     return card;
   }
 
-  /**
-   * Add a new card at the end of the deck
-   */
-  appendCard() {
+  appendCard(): PunchCard {
     const card = new PunchCard();
     this.cards.push(card);
     this.currentIndex = this.cards.length - 1;
@@ -92,12 +72,8 @@ export class CardDeck {
     return card;
   }
 
-  /**
-   * Remove the current card
-   */
-  removeCurrentCard() {
+  removeCurrentCard(): void {
     if (this.cards.length <= 1) {
-      // Don't remove the last card, just clear it
       this.currentCard.clearAll();
       this._notify();
       return;
@@ -109,28 +85,17 @@ export class CardDeck {
     this._notify();
   }
 
-  /**
-   * Clear all cards and reset to a single blank card
-   */
-  clearDeck() {
+  clearDeck(): void {
     this.cards = [new PunchCard()];
     this.currentIndex = 0;
     this._notify();
   }
 
-  /**
-   * Read text from all cards
-   * @returns {string[]} array of card texts
-   */
-  readAllText() {
+  readAllText(): string[] {
     return this.cards.map(card => card.readText());
   }
 
-  /**
-   * Load a program (array of text lines) into the deck
-   * @param {string[]} lines - text lines, one per card
-   */
-  loadProgram(lines) {
+  loadProgram(lines: string[]): void {
     this.cards = lines.map(line => {
       const card = new PunchCard();
       card.writeText(line);
@@ -143,30 +108,23 @@ export class CardDeck {
     this._notify();
   }
 
-  /**
-   * Save deck to localStorage
-   */
-  save() {
+  save(): void {
     try {
       const data = {
         cards: this.cards.map(c => c.toJSON()),
         currentIndex: this.currentIndex
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
+    } catch {
       // localStorage may be unavailable
     }
   }
 
-  /**
-   * Load deck from localStorage
-   * @returns {boolean} true if loaded successfully
-   */
-  load() {
+  load(): boolean {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return false;
-      const data = JSON.parse(raw);
+      const data = JSON.parse(raw) as { cards?: PunchCardJSON[]; currentIndex?: number };
       if (!data.cards || !Array.isArray(data.cards)) return false;
       this.cards = data.cards.map(c => PunchCard.fromJSON(c));
       if (this.cards.length === 0) {
@@ -175,7 +133,7 @@ export class CardDeck {
       this.currentIndex = Math.min(data.currentIndex || 0, this.cards.length - 1);
       this._notify();
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }

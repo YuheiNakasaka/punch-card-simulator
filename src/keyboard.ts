@@ -1,14 +1,24 @@
-import { COLS, CHAR_TO_PUNCHES } from './encoding.js';
+import { COLS, CHAR_TO_PUNCHES } from './encoding';
+import { PunchCard } from './card';
+
+interface KeyboardHandlerOptions {
+  getCard: () => PunchCard;
+  onCursorMove: (col: number) => void;
+  onColumnChanged: (col: number) => void;
+  onNextCard: () => void;
+}
 
 export class KeyboardHandler {
-  /**
-   * @param {object} opts
-   * @param {() => import('./card.js').PunchCard} opts.getCard - get current card
-   * @param {(col: number) => void} opts.onCursorMove - cursor moved
-   * @param {(col: number) => void} opts.onColumnChanged - column data changed
-   * @param {() => void} opts.onNextCard - enter/advance to next card
-   */
-  constructor({ getCard, onCursorMove, onColumnChanged, onNextCard }) {
+  getCard: () => PunchCard;
+  onCursorMove: (col: number) => void;
+  onColumnChanged: (col: number) => void;
+  onNextCard: () => void;
+  cursorCol: number;
+  enabled: boolean;
+  private _handler: (e: KeyboardEvent) => void;
+  private _element: EventTarget | null;
+
+  constructor({ getCard, onCursorMove, onColumnChanged, onNextCard }: KeyboardHandlerOptions) {
     this.getCard = getCard;
     this.onCursorMove = onCursorMove;
     this.onColumnChanged = onColumnChanged;
@@ -16,38 +26,30 @@ export class KeyboardHandler {
     this.cursorCol = 0;
     this.enabled = true;
     this._handler = this._handleKey.bind(this);
+    this._element = null;
   }
 
-  /**
-   * Attach to a DOM element for keyboard events
-   */
-  attach(element) {
+  attach(element: EventTarget): void {
     this._element = element;
-    element.addEventListener('keydown', this._handler);
+    element.addEventListener('keydown', this._handler as EventListener);
   }
 
-  /**
-   * Detach keyboard handler
-   */
-  detach() {
+  detach(): void {
     if (this._element) {
-      this._element.removeEventListener('keydown', this._handler);
+      this._element.removeEventListener('keydown', this._handler as EventListener);
     }
   }
 
-  /**
-   * Set cursor position
-   */
-  setCursor(col) {
+  setCursor(col: number): void {
     this.cursorCol = Math.max(0, Math.min(col, COLS - 1));
     this.onCursorMove(this.cursorCol);
   }
 
-  _handleKey(e) {
+  private _handleKey(e: KeyboardEvent): void {
     if (!this.enabled) return;
 
     // Don't handle if typing in input/textarea
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if ((e.target as Element).tagName === 'INPUT' || (e.target as Element).tagName === 'TEXTAREA') return;
 
     const card = this.getCard();
     if (!card) return;
@@ -98,7 +100,6 @@ export class KeyboardHandler {
         break;
 
       default:
-        // Try to encode the character
         if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
           const upper = e.key.toUpperCase();
           if (CHAR_TO_PUNCHES[upper] !== undefined) {

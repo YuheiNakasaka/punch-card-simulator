@@ -1,31 +1,35 @@
-import { COLS, ROWS, ROW_LABELS } from './encoding.js';
+import { COLS, ROWS, ROW_LABELS } from './encoding';
+import { PunchCard } from './card';
 
 export class CardRenderer {
-  /**
-   * @param {HTMLElement} container - element to render the card into
-   */
-  constructor(container) {
+  container: HTMLElement;
+  cursorCol: number;
+  private _onCellClick: ((col: number, row: number) => void) | null;
+  private _cells: HTMLDivElement[][]; // cells[col][row]
+  private _charCells: HTMLDivElement[];
+  private _colNumbers: HTMLDivElement[];
+
+  constructor(container: HTMLElement) {
     this.container = container;
     this.cursorCol = 0;
     this._onCellClick = null;
-    this._cells = []; // cells[col][row]
-    this._charCells = []; // decoded char display cells
-    this._colNumbers = []; // column number headers
+    this._cells = [];
+    this._charCells = [];
+    this._colNumbers = [];
     this._build();
   }
 
-  set onCellClick(fn) {
+  set onCellClick(fn: (col: number, row: number) => void) {
     this._onCellClick = fn;
   }
 
-  _build() {
+  private _build(): void {
     this.container.innerHTML = '';
     this.container.classList.add('punch-card');
 
     // Top section: decoded characters row
     const charRow = document.createElement('div');
     charRow.className = 'card-char-row';
-    // Empty cell for row labels column
     const labelSpacer = document.createElement('div');
     labelSpacer.className = 'row-label spacer';
     charRow.appendChild(labelSpacer);
@@ -33,7 +37,7 @@ export class CardRenderer {
     for (let col = 0; col < COLS; col++) {
       const cell = document.createElement('div');
       cell.className = 'char-cell';
-      cell.dataset.col = col;
+      cell.dataset.col = String(col);
       charRow.appendChild(cell);
       this._charCells.push(cell);
     }
@@ -49,12 +53,11 @@ export class CardRenderer {
     for (let col = 0; col < COLS; col++) {
       const cell = document.createElement('div');
       cell.className = 'col-num';
-      // Show numbers at intervals: 1, 5, 10, 15, ... 80
       const num = col + 1;
       if (num === 1 || num % 10 === 0) {
-        cell.textContent = num;
+        cell.textContent = String(num);
       } else if (num % 5 === 0) {
-        cell.textContent = num;
+        cell.textContent = String(num);
       }
       colNumRow.appendChild(cell);
       this._colNumbers.push(cell);
@@ -62,12 +65,11 @@ export class CardRenderer {
     this.container.appendChild(colNumRow);
 
     // Grid section: 12 rows x 80 cols
-    this._cells = Array.from({ length: COLS }, () => []);
+    this._cells = Array.from({ length: COLS }, () => [] as HTMLDivElement[]);
     const grid = document.createElement('div');
     grid.className = 'card-grid';
 
     for (let row = 0; row < ROWS; row++) {
-      // Row label
       const label = document.createElement('div');
       label.className = 'row-label';
       label.textContent = ROW_LABELS[row];
@@ -76,8 +78,8 @@ export class CardRenderer {
       for (let col = 0; col < COLS; col++) {
         const cell = document.createElement('div');
         cell.className = 'grid-cell';
-        cell.dataset.col = col;
-        cell.dataset.row = row;
+        cell.dataset.col = String(col);
+        cell.dataset.row = String(row);
         cell.addEventListener('click', () => {
           if (this._onCellClick) this._onCellClick(col, row);
         });
@@ -88,36 +90,24 @@ export class CardRenderer {
     this.container.appendChild(grid);
   }
 
-  /**
-   * Update the rendering from a PunchCard
-   * @param {import('./card.js').PunchCard} card
-   */
-  render(card) {
+  render(card: PunchCard): void {
     for (let col = 0; col < COLS; col++) {
-      // Update punched state
       for (let row = 0; row < ROWS; row++) {
         const cell = this._cells[col][row];
         cell.classList.toggle('punched', card.isPunched(col, row));
       }
-      // Update decoded character
       const ch = card.decodeCharAt(col);
       this._charCells[col].textContent = ch;
     }
     this.updateCursor(this.cursorCol);
   }
 
-  /**
-   * Update cursor position highlight
-   * @param {number} col
-   */
-  updateCursor(col) {
-    // Remove old cursor
+  updateCursor(col: number): void {
     const oldCursor = this.container.querySelectorAll('.cursor');
     oldCursor.forEach(el => el.classList.remove('cursor'));
 
     this.cursorCol = col;
     if (col >= 0 && col < COLS) {
-      // Highlight the entire column
       this._charCells[col].classList.add('cursor');
       for (let row = 0; row < ROWS; row++) {
         this._cells[col][row].classList.add('cursor');
@@ -126,17 +116,10 @@ export class CardRenderer {
   }
 }
 
-/**
- * Render a mini thumbnail of a card for the deck overview
- * @param {import('./card.js').PunchCard} card
- * @param {number} index
- * @param {boolean} isCurrent
- * @returns {HTMLElement}
- */
-export function renderCardThumbnail(card, index, isCurrent) {
+export function renderCardThumbnail(card: PunchCard, index: number, isCurrent: boolean): HTMLElement {
   const thumb = document.createElement('div');
   thumb.className = 'card-thumbnail' + (isCurrent ? ' current' : '');
-  thumb.dataset.index = index;
+  thumb.dataset.index = String(index);
 
   const label = document.createElement('div');
   label.className = 'thumb-label';
@@ -154,11 +137,13 @@ export function renderCardThumbnail(card, index, isCurrent) {
   miniGrid.width = 160;
   miniGrid.height = 24;
   const ctx = miniGrid.getContext('2d');
-  ctx.fillStyle = '#3E2723';
-  for (let col = 0; col < COLS; col++) {
-    for (let row = 0; row < ROWS; row++) {
-      if (card.isPunched(col, row)) {
-        ctx.fillRect(col * 2, row * 2, 1.5, 1.5);
+  if (ctx) {
+    ctx.fillStyle = '#3E2723';
+    for (let col = 0; col < COLS; col++) {
+      for (let row = 0; row < ROWS; row++) {
+        if (card.isPunched(col, row)) {
+          ctx.fillRect(col * 2, row * 2, 1.5, 1.5);
+        }
       }
     }
   }

@@ -15,24 +15,36 @@
 
 ## 開発環境のセットアップ
 
-ビルドツール・フレームワーク・npm は不要です。ES Modules を使用しているためローカルサーバーが必要です。
-
-```bash
-cd acme/punch-card-simulator
-
-# ローカルサーバー起動
-python3 -m http.server 8765
-
-# ブラウザで開く
-open http://localhost:8765
-```
-
-> **注意**: `file://` プロトコルでは ES Modules の import が CORS エラーになるため、HTTP サーバー経由で開いてください。
-
 ### 必要環境
 
-- モダンブラウザ（ES Modules 対応: Chrome 61+, Firefox 60+, Safari 11+）
-- ローカル HTTP サーバー（Python, Node, etc.）
+- Node.js 18+
+- npm
+
+### セットアップ
+
+```bash
+cd punch-card-simulator
+npm install
+npm run dev
+# http://localhost:5173 にアクセス
+```
+
+### コマンド一覧
+
+| コマンド | 説明 |
+|---|---|
+| `npm run dev` | Vite 開発サーバー起動 (HMR 対応) |
+| `npm run build` | TypeScript 型チェック + 本番ビルド (`dist/`) |
+| `npm run preview` | ビルド結果のローカルプレビュー |
+| `npx tsc --noEmit` | TypeScript 型チェックのみ |
+
+### プロジェクト設定ファイル
+
+| ファイル | 説明 |
+|---|---|
+| `tsconfig.json` | TypeScript 設定 (strict, ES2020, moduleResolution: bundler) |
+| `vite.config.ts` | Vite 設定 (root: `.`, outDir: `dist`) |
+| `package.json` | `"type": "module"`, 依存: `vite`, `typescript` |
 
 ---
 
@@ -42,7 +54,7 @@ MVC パターンをベースとした構成です。
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│                   app.js (Controller)                 │
+│                   app.ts (Controller)                  │
 ├───────────────┬────────────────┬──────────────────────┤
 │  CardDeck     │  CardRenderer  │    Interpreter       │
 │  (Model)      │  (View)        │    (Engine)          │
@@ -50,16 +62,32 @@ MVC パターンをベースとした構成です。
 │  ┌─────────┐  │  ┌──────────┐  │  ┌────────────────┐  │
 │  │PunchCard│  │  │Grid DOM  │  │  │Variables/Labels│  │
 │  │ 80×12   │  │  │Click/    │  │  │Program Counter │  │
-│  │ boolean │  │  │Cursor    │  │  │Step Counter    │  │
+│  │boolean[]│  │  │Cursor    │  │  │Step Counter    │  │
 │  └─────────┘  │  └──────────┘  │  └────────────────┘  │
 │               │                │                      │
 ├───────────────┴────────────────┴──────────────────────┤
 │               KeyboardHandler (Input)                 │
 ├───────────────────────────────────────────────────────┤
-│  encoding.js (IBM 029 Lookup Tables)                  │
-│  tutorial.js (Static Content & Examples)              │
+│  encoding.ts (IBM 029 Lookup Tables)                  │
+│  tutorial.ts (Static Content & Examples)              │
 └───────────────────────────────────────────────────────┘
 ```
+
+### エントリポイント
+
+`src/main.ts` がエントリポイントです。CSS のインポートと `App` クラスの初期化を行います。
+
+```typescript
+import './style.css';
+import { App } from './app';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const app = new App();
+  app.init();
+});
+```
+
+Vite は `index.html` の `<script type="module" src="/src/main.ts">` から処理を開始します。
 
 ### データフロー
 
@@ -75,38 +103,41 @@ MVC パターンをベースとした構成です。
 ### モジュール依存関係
 
 ```
-app.js
-├── deck.js
-│   └── card.js
-│       └── encoding.js
-├── renderer.js
-│   └── encoding.js
-├── keyboard.js
-│   └── encoding.js
-├── interpreter.js  (依存なし)
-└── tutorial.js
-    └── encoding.js
+main.ts
+└── app.ts
+    ├── deck.ts
+    │   └── card.ts
+    │       └── encoding.ts
+    ├── renderer.ts
+    │   ├── encoding.ts
+    │   └── card.ts (型参照)
+    ├── keyboard.ts
+    │   ├── encoding.ts
+    │   └── card.ts (型参照)
+    ├── interpreter.ts  (外部依存なし)
+    └── tutorial.ts
+        └── encoding.ts
 ```
 
 ---
 
 ## モジュール詳細
 
-### encoding.js — IBM 029 文字エンコーディング
+### encoding.ts — IBM 029 文字エンコーディング
 
 全モジュールの基盤。IBM 029 キーパンチの文字⇔パンチパターン変換を提供します。
 
-| エクスポート | 種別 | 説明 |
+| エクスポート | 型 | 説明 |
 |---|---|---|
-| `COLS` | `number` | カラム数 (`80`) |
-| `ROWS` | `number` | 行数 (`12`) |
+| `COLS` | `number` (`80`) | カラム数 |
+| `ROWS` | `number` (`12`) | 行数 |
 | `ROW_LABELS` | `string[]` | 行ラベル `['12','11','0','1',...,'9']` |
-| `ROW_INDEX` | `object` | ラベル→インデックス マップ |
-| `CHAR_TO_PUNCHES` | `object` | 文字→パンチ行ラベル配列 |
-| `PUNCHES_TO_CHAR` | `object` | パンチパターン→文字（逆引き） |
-| `encodeChar(char)` | `function` | 文字 → row index 配列 (0-11) |
-| `decodeRows(rowIndices)` | `function` | row index 配列 → 文字 |
-| `getAllEncodings()` | `function` | 全エンコーディング一覧 |
+| `ROW_INDEX` | `Record<string, number>` | ラベル→インデックス マップ |
+| `CHAR_TO_PUNCHES` | `Record<string, string[]>` | 文字→パンチ行ラベル配列 |
+| `PUNCHES_TO_CHAR` | `Record<string, string>` | パンチパターン→文字（逆引き） |
+| `encodeChar(char: string)` | `number[] \| null` | 文字 → row index 配列 (0-11) |
+| `decodeRows(rowIndices: number[])` | `string` | row index 配列 → 文字 |
+| `getAllEncodings()` | `Array<{char, punches}>` | 全エンコーディング一覧 |
 
 **エンコーディング規則:**
 
@@ -124,12 +155,12 @@ app.js
 
 ---
 
-### card.js — PunchCard データモデル
+### card.ts — PunchCard データモデル
 
 1枚のパンチカード (80列×12行) を表現するクラスです。
 
-```js
-import { PunchCard } from './card.js';
+```typescript
+import { PunchCard } from './card';
 
 const card = new PunchCard();
 card.encodeCharAt(0, 'A');       // 列0に'A'をパンチ
@@ -141,22 +172,36 @@ card.toJSON();                  // → { punches: [[0,0],[0,3], ...] }
 PunchCard.fromJSON(data);       // デシリアライズ
 ```
 
+**型定義:**
+
+```typescript
+interface PunchCardJSON {
+  punches: [number, number][];
+}
+
+class PunchCard {
+  grid: boolean[][];  // grid[col][row]
+  // ...
+}
+```
+
 **主要メソッド:**
 
 | メソッド | 説明 |
 |---|---|
-| `toggle(col, row)` | パンチ状態をトグル |
-| `punch(col, row)` | パンチを追加 |
-| `clear(col, row)` | パンチを除去 |
-| `isPunched(col, row)` | パンチ状態を取得 |
-| `clearColumn(col)` | 列を全消去 |
-| `encodeCharAt(col, char)` | 文字をエンコードして列にパンチ |
-| `decodeCharAt(col)` | 列からデコードされた文字を取得 |
-| `readText()` | カード全体を文字列として読み取り |
-| `writeText(text, startCol)` | 文字列をカードに書き込み |
-| `clearAll()` | カード全体を消去 |
-| `isBlank()` | 空カードかどうか |
-| `toJSON()` / `fromJSON()` | シリアライズ / デシリアライズ |
+| `toggle(col: number, row: number): void` | パンチ状態をトグル |
+| `punch(col: number, row: number): void` | パンチを追加 |
+| `clear(col: number, row: number): void` | パンチを除去 |
+| `isPunched(col: number, row: number): boolean` | パンチ状態を取得 |
+| `clearColumn(col: number): void` | 列を全消去 |
+| `encodeCharAt(col: number, char: string): boolean` | 文字をエンコードして列にパンチ |
+| `decodeCharAt(col: number): string` | 列からデコードされた文字を取得 |
+| `readText(): string` | カード全体を文字列として読み取り |
+| `writeText(text: string, startCol?: number): number` | 文字列をカードに書き込み |
+| `clearAll(): void` | カード全体を消去 |
+| `isBlank(): boolean` | 空カードかどうか |
+| `toJSON(): PunchCardJSON` | シリアライズ |
+| `static fromJSON(data: PunchCardJSON): PunchCard` | デシリアライズ |
 
 **シリアライズ形式 (sparse):**
 
@@ -168,12 +213,12 @@ PunchCard.fromJSON(data);       // デシリアライズ
 
 ---
 
-### deck.js — CardDeck 管理
+### deck.ts — CardDeck 管理
 
 複数の PunchCard を管理するデッキクラスです。
 
-```js
-import { CardDeck } from './deck.js';
+```typescript
+import { CardDeck } from './deck';
 
 const deck = new CardDeck();
 deck.onChange = () => { /* 変更通知 */ };
@@ -198,17 +243,17 @@ deck.save(); deck.load();          // localStorage 永続化
 
 ---
 
-### renderer.js — カード描画
+### renderer.ts — カード描画
 
 DOM を構築してカードの視覚表現を生成します。
 
 **CardRenderer:**
 
-```js
-import { CardRenderer } from './renderer.js';
+```typescript
+import { CardRenderer } from './renderer';
 
-const renderer = new CardRenderer(document.getElementById('card-container'));
-renderer.onCellClick = (col, row) => { /* クリックハンドラ */ };
+const renderer = new CardRenderer(document.getElementById('card-container')!);
+renderer.onCellClick = (col: number, row: number) => { /* クリックハンドラ */ };
 renderer.render(card);           // カードの状態を DOM に反映
 renderer.updateCursor(col);      // カーソル位置を更新
 ```
@@ -231,13 +276,22 @@ renderer.updateCursor(col);      // カーソル位置を更新
 
 **renderCardThumbnail(card, index, isCurrent):**
 
-デッキ概要パネルのサムネイルを生成。Canvas (160×24px) でミニグリッドを描画します。
+デッキ概要パネルのサムネイルを生成。Canvas (160x24px) でミニグリッドを描画します。
 
 ---
 
-### keyboard.js — キーボード入力
+### keyboard.ts — キーボード入力
 
 キー入力をカード操作に変換します。
+
+```typescript
+interface KeyboardHandlerOptions {
+  getCard: () => PunchCard;
+  onCursorMove: (col: number) => void;
+  onColumnChanged: (col: number) => void;
+  onNextCard: () => void;
+}
+```
 
 | キー | 動作 |
 |---|---|
@@ -252,20 +306,32 @@ renderer.updateCursor(col);      // カーソル位置を更新
 
 ---
 
-### interpreter.js — 命令インタープリタ
+### interpreter.ts — 命令インタープリタ
 
 14命令をサポートする簡易プログラム実行エンジンです。
 
-```js
-import { Interpreter } from './interpreter.js';
+```typescript
+import { Interpreter } from './interpreter';
 
 const interp = new Interpreter();
-interp.onOutput = (text) => console.log(text);
-interp.onFinish = (msg) => console.log(msg);
+interp.onOutput = (text: string) => console.log(text);
+interp.onFinish = (msg: string) => console.log(msg);
 interp.load(['PRT HELLO', 'END']);
 interp.run();             // 全実行
 // or
 interp.stepOnce();        // 1命令ずつ
+```
+
+**主要プロパティの型:**
+
+```typescript
+variables: Record<string, number>;
+labels: Record<string, number>;
+program: string[];
+pc: number;
+stepCount: number;
+running: boolean;
+waitingForInput: boolean;
 ```
 
 **実行フロー:**
@@ -277,13 +343,13 @@ interp.stepOnce();        // 1命令ずつ
 5. コールバック経由で値を受け取ると再開
 6. `END` 命令または最大ステップ数 (10,000) で終了
 
-**変数:** `this.variables` (string → number)。未定義変数は `0` として扱います。
+**変数:** `this.variables` (`Record<string, number>`)。未定義変数は `0` として扱います。
 
 **新しい命令を追加する場合:**
 
 `step()` メソッド内の `switch(op)` にケースを追加します。
 
-```js
+```typescript
 case 'NEW_OP': {
   // 実装
   this.pc++;
@@ -293,7 +359,7 @@ case 'NEW_OP': {
 
 ---
 
-### tutorial.js — チュートリアル・サンプル
+### tutorial.ts — チュートリアル・サンプル
 
 静的コンテンツの生成と、サンプルプログラムの定義を担当します。
 
@@ -301,25 +367,36 @@ case 'NEW_OP': {
 
 `EXAMPLES` オブジェクトにエントリを追加します。
 
-```js
-export const EXAMPLES = {
+```typescript
+export const EXAMPLES: Record<string, string[]> = {
   'Hello World': ['PRT HELLO WORLD', 'END'],
   'My New Program': [
     'NUM X 5',
     'SHW X',
     'END',
   ],
-  // ...
 };
 ```
 
-ドロップダウンには `app.js` の `_buildExamplesDropdown()` で自動反映されます。
+ドロップダウンには `app.ts` の `_buildExamplesDropdown()` で自動反映されます。
 
 ---
 
-### app.js — アプリケーションコントローラ
+### app.ts — アプリケーションコントローラ
 
-全モジュールを統合するエントリポイントです。
+全モジュールを統合するコントローラクラスです。`main.ts` から初期化されます。
+
+**主要プロパティの型:**
+
+```typescript
+class App {
+  deck: CardDeck;
+  interpreter: Interpreter;
+  renderer: CardRenderer | null;
+  keyboard: KeyboardHandler | null;
+  private _autoSaveTimer: ReturnType<typeof setTimeout> | null;
+}
+```
 
 **初期化フロー (`init()`):**
 
@@ -335,6 +412,8 @@ export const EXAMPLES = {
 10. 初回描画
 
 **自動保存:** `_scheduleSave()` で 500ms デバウンスの localStorage 保存を行います。
+
+**getElementById ヘルパー:** 要素が見つからない場合にエラーをスローするヘルパー関数を提供。TypeScript の null チェックを簡潔にします。
 
 ---
 
@@ -394,6 +473,8 @@ row: 0-11 (12行)
 
   <div class="exec-bar">               <!-- 実行バー -->
     └── btn-run / btn-step / btn-reset
+
+  <script type="module" src="/src/main.ts">
 </body>
 ```
 
@@ -401,7 +482,7 @@ row: 0-11 (12行)
 
 ## デザイントークン（CSS カスタムプロパティ）
 
-`css/style.css` の `:root` で定義されています。
+`src/style.css` の `:root` で定義されています。
 
 ### カラーパレット
 
@@ -432,25 +513,25 @@ row: 0-11 (12行)
 
 ### 新しいインタープリタ命令を追加する
 
-1. `js/interpreter.js` の `step()` メソッド内の `switch` にケースを追加
-2. `js/tutorial.js` の命令リファレンス HTML を更新
+1. `src/interpreter.ts` の `step()` メソッド内の `switch` にケースを追加
+2. `src/tutorial.ts` の命令リファレンス HTML を更新
 3. 必要に応じてサンプルプログラムを追加
 
 ### 新しい文字エンコーディングを追加する
 
-1. `js/encoding.js` の `CHAR_TO_PUNCHES` にエントリを追加
+1. `src/encoding.ts` の `CHAR_TO_PUNCHES` にエントリを追加
 2. 逆引きマップは自動生成されるため対応不要
-3. `js/keyboard.js` は `CHAR_TO_PUNCHES` を参照するため自動対応
+3. `src/keyboard.ts` は `CHAR_TO_PUNCHES` を参照するため自動対応
 
 ### 新しいサンプルプログラムを追加する
 
-1. `js/tutorial.js` の `EXAMPLES` オブジェクトにエントリを追加
-2. ドロップダウンは `app.js` で自動構築されるため他の変更は不要
+1. `src/tutorial.ts` の `EXAMPLES` オブジェクトにエントリを追加
+2. ドロップダウンは `app.ts` で自動構築されるため他の変更は不要
 
 ### 新しい UI タブを追加する
 
 1. `index.html` に `<button class="tab-btn" data-tab="xxx">` と `<div id="tab-xxx" class="tab-panel">` を追加
-2. タブ切り替えロジックは `app.js` の `_bindTabs()` が data 属性ベースで自動処理
+2. タブ切り替えロジックは `app.ts` の `_bindTabs()` が data 属性ベースで自動処理
 
 ---
 
@@ -458,18 +539,14 @@ row: 0-11 (12行)
 
 ### Cloudflare Pages
 
-静的サイトとしてそのままデプロイ可能です。ビルドコマンドは不要です。
-
 ```bash
-# CLI
-wrangler pages deploy acme/punch-card-simulator/
-
-# または Cloudflare ダッシュボードからドラッグ＆ドロップ
+npm run build
+wrangler pages deploy dist/
 ```
 
 ### その他のホスティング
 
-すべてのアセットパスは相対パスのため、任意の静的ホスティングで動作します。
+`npm run build` で生成される `dist/` ディレクトリを任意の静的ホスティングにデプロイできます。
 
 - GitHub Pages
 - Netlify
