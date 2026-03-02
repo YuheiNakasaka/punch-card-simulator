@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Punch Card Programming Simulator</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div>
+      <h1>PUNCH CARD SIMULATOR</h1>
+      <span class="subtitle">IBM 80-Column Card &mdash; Interactive Programming Experience</span>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <button id="btn-prev" class="btn" title="Previous card">&larr; Prev</button>
+      <span id="card-counter">Card 1 of 1</span>
+      <button id="btn-next" class="btn" title="Next card (or add new)">Next &rarr;</button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-group">
+      <button id="btn-add" class="btn" title="Insert new card after current">+ Add Card</button>
+      <button id="btn-remove" class="btn btn-danger" title="Remove current card">&times; Remove</button>
+      <button id="btn-clear-card" class="btn" title="Clear current card">Clear Card</button>
+      <button id="btn-clear-deck" class="btn btn-danger" title="Clear all cards">Clear Deck</button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-group">
+      <select id="examples-select" title="Load example program">
+        <option value="">Load Example...</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Punch Card Area -->
+  <div class="card-area">
+    <div id="card-container"></div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="deck">Deck</button>
+    <button class="tab-btn" data-tab="output">Output</button>
+    <button class="tab-btn" data-tab="reference">Encoding</button>
+    <button class="tab-btn" data-tab="tutorial">Tutorial</button>
+  </div>
+
+  <!-- Tab Panels -->
+  <div class="tab-content">
+    <div id="tab-deck" class="tab-panel active">
+      <div id="deck-overview"></div>
+    </div>
+
+    <div id="tab-output" class="tab-panel">
+      <div id="terminal-output"></div>
+      <div id="terminal-input-area" class="hidden">
+        <span id="terminal-input-label"></span>
+        <input id="terminal-input" type="text" autocomplete="off">
+      </div>
+    </div>
+
+    <div id="tab-reference" class="tab-panel"></div>
+    <div id="tab-tutorial" class="tab-panel"></div>
+  </div>
+
+  <!-- Execution Bar -->
+  <div class="exec-bar">
+    <button id="btn-run" class="btn btn-primary" title="Run entire program">&#9654; Run</button>
+    <button id="btn-step" class="btn" title="Execute one instruction">Step</button>
+    <button id="btn-reset" class="btn" title="Reset execution state">Reset</button>
+    <span style="color: var(--text-dim); font-size: 0.75rem; margin-left: 0.5rem;">
+      Type to punch characters &bull; Click cells to toggle &bull; Arrow keys to navigate
+    </span>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
