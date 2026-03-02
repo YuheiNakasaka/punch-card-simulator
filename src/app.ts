@@ -10,12 +10,23 @@ function getElementById(id: string): HTMLElement {
   return el;
 }
 
+interface BaseSizes {
+  cellHeight: number;
+  cellFontSize: number;
+  rowLabelWidth: number;
+  rowLabelFontSize: number;
+  colNumFontSize: number;
+  colNumHeight: number;
+  cellMinWidth: number;
+}
+
 export class App {
   deck: CardDeck;
   interpreter: Interpreter;
   renderer: CardRenderer | null;
   keyboard: KeyboardHandler | null;
   private _autoSaveTimer: ReturnType<typeof setTimeout> | null;
+  private _zoomLevel: number;
 
   constructor() {
     this.deck = new CardDeck();
@@ -23,6 +34,7 @@ export class App {
     this.renderer = null;
     this.keyboard = null;
     this._autoSaveTimer = null;
+    this._zoomLevel = 1.0;
   }
 
   init(): void {
@@ -73,6 +85,9 @@ export class App {
 
     // Bind toolbar buttons
     this._bindToolbar();
+
+    // Bind zoom controls
+    this._bindZoomControls();
 
     // Bind tab navigation
     this._bindTabs();
@@ -294,6 +309,63 @@ export class App {
       });
       container.appendChild(thumb);
     }
+  }
+
+  private _getBaseSizes(): BaseSizes {
+    const w = window.innerWidth;
+    if (w <= 768) {
+      return {
+        cellHeight: 28, cellFontSize: 14, rowLabelWidth: 32,
+        rowLabelFontSize: 12, colNumFontSize: 9, colNumHeight: 16, cellMinWidth: 16,
+      };
+    } else if (w <= 1200) {
+      return {
+        cellHeight: 12, cellFontSize: 8, rowLabelWidth: 20,
+        rowLabelFontSize: 7, colNumFontSize: 5, colNumHeight: 9, cellMinWidth: 0,
+      };
+    }
+    return {
+      cellHeight: 14, cellFontSize: 9, rowLabelWidth: 22,
+      rowLabelFontSize: 8, colNumFontSize: 6, colNumHeight: 10, cellMinWidth: 0,
+    };
+  }
+
+  private _setZoom(level: number): void {
+    this._zoomLevel = Math.max(0.5, Math.min(3.0, level));
+    const base = this._getBaseSizes();
+    const z = this._zoomLevel;
+    const style = document.documentElement.style;
+    style.setProperty('--cell-height', `${Math.round(base.cellHeight * z)}px`);
+    style.setProperty('--cell-font-size', `${Math.round(base.cellFontSize * z)}px`);
+    style.setProperty('--row-label-width', `${Math.round(base.rowLabelWidth * z)}px`);
+    style.setProperty('--row-label-font-size', `${Math.round(base.rowLabelFontSize * z)}px`);
+    style.setProperty('--col-num-font-size', `${Math.round(base.colNumFontSize * z)}px`);
+    style.setProperty('--col-num-height', `${Math.round(base.colNumHeight * z)}px`);
+    if (base.cellMinWidth > 0) {
+      style.setProperty('--cell-min-width', `${Math.round(base.cellMinWidth * z)}px`);
+    }
+    getElementById('zoom-level').textContent = `${Math.round(this._zoomLevel * 100)}%`;
+  }
+
+  private _bindZoomControls(): void {
+    getElementById('btn-zoom-in').addEventListener('click', () => {
+      this._setZoom(this._zoomLevel + 0.25);
+    });
+    getElementById('btn-zoom-out').addEventListener('click', () => {
+      this._setZoom(this._zoomLevel - 0.25);
+    });
+    getElementById('btn-zoom-reset').addEventListener('click', () => {
+      this._setZoom(1.0);
+      // Remove inline overrides so CSS media queries take effect
+      const style = document.documentElement.style;
+      style.removeProperty('--cell-height');
+      style.removeProperty('--cell-font-size');
+      style.removeProperty('--row-label-width');
+      style.removeProperty('--row-label-font-size');
+      style.removeProperty('--col-num-font-size');
+      style.removeProperty('--col-num-height');
+      style.removeProperty('--cell-min-width');
+    });
   }
 
   private _scheduleSave(): void {

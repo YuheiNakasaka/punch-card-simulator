@@ -219,7 +219,66 @@ test.describe('Reset', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 11. Clear Card / Clear Deck
+// 11. Zoom Controls
+// ---------------------------------------------------------------------------
+test.describe('Zoom Controls', () => {
+  test('zoom in increases zoom level', async ({ page }) => {
+    await page.locator('#btn-zoom-in').click();
+    await expect(page.locator('#zoom-level')).toHaveText('125%');
+  });
+
+  test('zoom out decreases zoom level', async ({ page }) => {
+    await page.locator('#btn-zoom-out').click();
+    await expect(page.locator('#zoom-level')).toHaveText('75%');
+  });
+
+  test('zoom reset returns to 100%', async ({ page }) => {
+    await page.locator('#btn-zoom-in').click();
+    await page.locator('#btn-zoom-in').click();
+    await expect(page.locator('#zoom-level')).toHaveText('150%');
+
+    await page.locator('#btn-zoom-reset').click();
+    await expect(page.locator('#zoom-level')).toHaveText('100%');
+  });
+
+  test('zoom does not go below 50%', async ({ page }) => {
+    for (let i = 0; i < 5; i++) {
+      await page.locator('#btn-zoom-out').click();
+    }
+    await expect(page.locator('#zoom-level')).toHaveText('50%');
+  });
+
+  test('zoom does not go above 300%', async ({ page }) => {
+    for (let i = 0; i < 12; i++) {
+      await page.locator('#btn-zoom-in').click();
+    }
+    await expect(page.locator('#zoom-level')).toHaveText('300%');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 12. Mobile Viewport
+// ---------------------------------------------------------------------------
+test.describe('Mobile Viewport', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test('card area is horizontally scrollable on mobile', async ({ page }) => {
+    const cardArea = page.locator('.card-area');
+    const scrollWidth = await cardArea.evaluate(el => el.scrollWidth);
+    const clientWidth = await cardArea.evaluate(el => el.clientWidth);
+    expect(scrollWidth).toBeGreaterThan(clientWidth);
+  });
+
+  test('cells are large enough to tap on mobile', async ({ page }) => {
+    const cell = page.locator('.grid-cell').first();
+    const box = await cell.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeGreaterThanOrEqual(20);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 13. Clear Card / Clear Deck
 // ---------------------------------------------------------------------------
 test.describe('Clear Card / Clear Deck', () => {
   test('clear card blanks the current card', async ({ page }) => {

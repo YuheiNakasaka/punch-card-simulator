@@ -24,6 +24,13 @@
   --text-dim: #999;
   --cursor-color: rgba(255, 200, 50, 0.4);
   --border: #555;
+  --cell-height: 14px;
+  --cell-font-size: 9px;
+  --row-label-width: 22px;
+  --row-label-font-size: 8px;
+  --col-num-font-size: 6px;
+  --col-num-height: 10px;
+  --cell-min-width: 0px;
 }
 
 * {
@@ -174,19 +181,20 @@ select {
 /* Decoded characters row */
 .card-char-row {
   display: grid;
-  grid-template-columns: 22px repeat(80, 1fr);
+  grid-template-columns: var(--row-label-width) repeat(80, 1fr);
   gap: 0;
   margin-bottom: 2px;
 }
 
 .card-char-row .char-cell {
   width: 100%;
-  height: 14px;
+  height: var(--cell-height);
+  min-width: var(--cell-min-width);
   text-align: center;
-  font-size: 9px;
+  font-size: var(--cell-font-size);
   font-weight: 600;
   color: var(--brown);
-  line-height: 14px;
+  line-height: var(--cell-height);
   overflow: hidden;
 }
 
@@ -198,34 +206,35 @@ select {
 /* Column numbers */
 .card-col-numbers {
   display: grid;
-  grid-template-columns: 22px repeat(80, 1fr);
+  grid-template-columns: var(--row-label-width) repeat(80, 1fr);
   gap: 0;
   margin-bottom: 1px;
 }
 
 .col-num {
   text-align: center;
-  font-size: 6px;
+  font-size: var(--col-num-font-size);
   color: var(--brown-light);
-  line-height: 10px;
+  line-height: var(--col-num-height);
+  min-width: var(--cell-min-width);
   opacity: 0.7;
 }
 
 /* Main grid */
 .card-grid {
   display: grid;
-  grid-template-columns: 22px repeat(80, 1fr);
+  grid-template-columns: var(--row-label-width) repeat(80, 1fr);
   gap: 0;
 }
 
 .row-label {
-  font-size: 8px;
+  font-size: var(--row-label-font-size);
   font-weight: 600;
   color: var(--brown);
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 14px;
+  height: var(--cell-height);
   user-select: none;
 }
 
@@ -235,7 +244,8 @@ select {
 
 .grid-cell {
   width: 100%;
-  height: 14px;
+  height: var(--cell-height);
+  min-width: var(--cell-min-width);
   border: 0.5px solid rgba(62, 39, 35, 0.12);
   cursor: pointer;
   transition: background 0.1s;
@@ -527,21 +537,43 @@ select {
 
 /* ---- Responsive ---- */
 @media (max-width: 1200px) {
-  .punch-card {
-    transform: scale(0.85);
-    transform-origin: top center;
+  :root {
+    --cell-height: 12px;
+    --cell-font-size: 8px;
+    --row-label-width: 20px;
+    --row-label-font-size: 7px;
+    --col-num-font-size: 5px;
+    --col-num-height: 9px;
   }
 }
 
-@media (max-width: 900px) {
-  .punch-card {
-    transform: scale(0.65);
-    transform-origin: top left;
+@media (max-width: 768px) {
+  :root {
+    --cell-height: 28px;
+    --cell-font-size: 14px;
+    --row-label-width: 32px;
+    --row-label-font-size: 12px;
+    --col-num-font-size: 9px;
+    --col-num-height: 16px;
+    --cell-min-width: 16px;
   }
-
   .card-area {
     justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
   }
+  .punch-card { min-width: max-content; }
+  .toolbar .btn { padding: 0.4rem 0.6rem; font-size: 0.75rem; }
+  .app-header h1 { font-size: 1rem; }
+  .app-header .subtitle { display: none; }
+  .exec-bar { flex-wrap: wrap; }
+  .exec-bar span { display: none; }
+}
+
+.zoom-level-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  min-width: 3em;
+  text-align: center;
 }
 
 /* ---- Scrollbar styling ---- */
