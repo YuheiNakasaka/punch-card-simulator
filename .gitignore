@@ -146,3 +146,4 @@ dist
 .claude/tmp
 .claude/settings.local.json
 .playwright-mcp/
+test-results/
