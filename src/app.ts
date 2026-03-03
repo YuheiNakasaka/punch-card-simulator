@@ -97,6 +97,14 @@ export class App {
     // Bind language toggle
     this._bindLangToggle();
 
+    // Bind Command+Enter shortcut
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === 'Enter') {
+        e.preventDefault();
+        this._runProgram();
+      }
+    });
+
     // Load examples dropdown
     this._buildExamplesDropdown();
     this._bindExamplesDropdown();
@@ -302,6 +310,7 @@ export class App {
       this._clearTerminal();
       this.interpreter.run();
       this._updateRunButtons();
+      this._switchToOutputTab();
     }
   }
 
@@ -322,6 +331,13 @@ export class App {
     this._clearTerminal();
     this._updateRunButtons();
     getElementById('terminal-input-area').classList.add('hidden');
+  }
+
+  private _switchToOutputTab(): void {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.tab-panel');
+    tabs.forEach(t => t.classList.toggle('active', (t as HTMLElement).dataset.tab === 'output'));
+    panels.forEach(p => p.classList.toggle('active', p.id === 'tab-output'));
   }
 
   private _clearTerminal(): void {

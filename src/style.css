@@ -49,6 +49,10 @@ body {
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding-bottom: 41px;
 }
 
 /* ---- Header ---- */
@@ -336,7 +340,9 @@ select {
 }
 
 .tab-content {
-  height: 260px;
+  flex: 1;
+  min-height: 120px;
+  height: auto;
   overflow: hidden;
   position: relative;
 }
@@ -567,6 +573,11 @@ select {
   align-items: center;
   gap: 0.5rem;
   border-top: 1px solid var(--border);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
 }
 
 .exec-helper-text {
