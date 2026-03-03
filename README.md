@@ -1,97 +1,97 @@
 # Punch Card Programming Simulator
 
-IBM 80列パンチカードによるプログラミングを体験できるインタラクティブなWebアプリケーション。
+An interactive web application that lets you experience programming with IBM 80-column punch cards.
 
 ![Punch Card Simulator](docs/screenshot.png)
 
-## 起動方法
+## Getting Started
 
 ```bash
 npm install
 npm run dev
-# http://localhost:5173 にアクセス
+# Open http://localhost:5173
 ```
 
-### その他のコマンド
+### Other Commands
 
 ```bash
-npm run build     # 本番ビルド (dist/ に出力)
-npm run preview   # ビルド結果のプレビュー
+npm run build     # Production build (output to dist/)
+npm run preview   # Preview the build output
 ```
 
-## 機能
+## Features
 
-### パンチカード操作
-- **クリック**: セルをクリックして穴を開閉（トグル）
-- **キーボード入力**: 文字を入力すると IBM 029 エンコーディングで自動パンチ
-- **カーソル移動**: 矢印キー / Home / End
-- **Backspace**: 前の列を消去
-- **Enter**: 次のカードへ移動（末尾なら新規追加）
+### Punch Card Operations
+- **Click**: Click a cell to toggle (punch/unpunch) a hole
+- **Keyboard Input**: Type characters to auto-punch using IBM 029 encoding
+- **Cursor Movement**: Arrow keys / Home / End
+- **Backspace**: Clear the previous column
+- **Enter**: Move to the next card (adds a new card if at the end)
 
-### デッキ管理
-- カードの追加・削除・クリア
-- Prev / Next ナビゲーション
-- サムネイル付きデッキ概要パネル
-- localStorage への自動保存
+### Deck Management
+- Add, delete, and clear cards
+- Prev / Next navigation
+- Deck overview panel with thumbnails
+- Auto-save to localStorage
 
-### プログラム実行
-14命令の簡易インタープリタを搭載。ターミナル風パネル（黒背景/緑文字）に出力されます。
+### Program Execution
+Includes a simple interpreter with 14 instructions. Output is displayed in a terminal-style panel (black background / green text).
 
-| 命令 | 書式 | 説明 |
-|------|------|------|
-| `PRT` | `PRT text` | テキスト出力 |
-| `NUM` | `NUM var val` | 変数に数値代入 |
-| `ADD` | `ADD var val` | 加算 |
-| `SUB` | `SUB var val` | 減算 |
-| `MUL` | `MUL var val` | 乗算 |
-| `DIV` | `DIV var val` | 除算 |
-| `SHW` | `SHW var` | 変数値を出力 |
-| `LBL` | `LBL name` | ラベル定義 |
-| `JMP` | `JMP name` | ラベルへジャンプ |
-| `JEZ` | `JEZ var name` | 0ならジャンプ |
-| `JGZ` | `JGZ var name` | 正ならジャンプ |
-| `INP` | `INP var` | ユーザー入力 |
-| `END` | `END` | 終了 |
-| `REM` | `REM text` | コメント |
+| Instruction | Syntax | Description |
+|-------------|--------|-------------|
+| `PRT` | `PRT text` | Print text |
+| `NUM` | `NUM var val` | Assign a number to a variable |
+| `ADD` | `ADD var val` | Addition |
+| `SUB` | `SUB var val` | Subtraction |
+| `MUL` | `MUL var val` | Multiplication |
+| `DIV` | `DIV var val` | Division |
+| `SHW` | `SHW var` | Print variable value |
+| `LBL` | `LBL name` | Define a label |
+| `JMP` | `JMP name` | Jump to a label |
+| `JEZ` | `JEZ var name` | Jump if zero |
+| `JGZ` | `JGZ var name` | Jump if positive |
+| `INP` | `INP var` | User input |
+| `END` | `END` | End program |
+| `REM` | `REM text` | Comment |
 
-### サンプルプログラム
-ドロップダウンから読み込み可能：
+### Sample Programs
+Load from the dropdown:
 
 - **Hello World** — `PRT HELLO WORLD` → `END`
-- **Countdown** — 10からカウントダウンして `LIFTOFF` を表示
-- **Calculator** — 2数を入力して加算結果を表示
-- **Fibonacci** — フィボナッチ数列の最初の10項を表示
+- **Countdown** — Counts down from 10 and displays `LIFTOFF`
+- **Calculator** — Input two numbers and display their sum
+- **Fibonacci** — Display the first 10 terms of the Fibonacci sequence
 
-## 技術スタック
+## Tech Stack
 
-- **Vite** — 開発サーバー / ビルドツール
-- **TypeScript** — strict モード
-- **IBM Plex Mono** フォント（Google Fonts）
-- フレームワーク依存なし（Vanilla DOM 操作）
+- **Vite** — Dev server / build tool
+- **TypeScript** — Strict mode
+- **IBM Plex Mono** font (Google Fonts)
+- No framework dependencies (Vanilla DOM manipulation)
 
-## ファイル構成
+## File Structure
 
 ```
 punch-card-simulator/
-├── index.html          # アプリシェル
+├── index.html          # App shell
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
 ├── src/
-│   ├── main.ts         # エントリポイント (CSS import + bootstrap)
-│   ├── app.ts          # アプリ初期化・状態管理
-│   ├── encoding.ts     # IBM 029 文字エンコーディング
-│   ├── card.ts         # PunchCard データモデル
-│   ├── deck.ts         # CardDeck 管理
-│   ├── renderer.ts     # カードグリッド DOM 描画
-│   ├── keyboard.ts     # キーボード入力ハンドラ
-│   ├── interpreter.ts  # 命令インタープリタ
-│   ├── tutorial.ts     # チュートリアル・サンプルプログラム
-│   └── style.css       # レトロ IBM 風スタイル
-└── dist/               # ビルド出力 (git 管理外)
+│   ├── main.ts         # Entry point (CSS import + bootstrap)
+│   ├── app.ts          # App initialization & state management
+│   ├── encoding.ts     # IBM 029 character encoding
+│   ├── card.ts         # PunchCard data model
+│   ├── deck.ts         # CardDeck management
+│   ├── renderer.ts     # Card grid DOM rendering
+│   ├── keyboard.ts     # Keyboard input handler
+│   ├── interpreter.ts  # Instruction interpreter
+│   ├── tutorial.ts     # Tutorial & sample programs
+│   └── style.css       # Retro IBM-style CSS
+└── dist/               # Build output (not tracked by git)
 ```
 
-## デプロイ
+## Deployment
 
 ### Cloudflare Pages
 
