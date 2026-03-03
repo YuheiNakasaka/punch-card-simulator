@@ -2,6 +2,8 @@
 
 IBM 80列パンチカードによるプログラミングを体験できるインタラクティブなWebアプリケーション。
 
+![Punch Card Simulator](docs/screenshot.png)
+
 ## 起動方法
 
 ```bash
