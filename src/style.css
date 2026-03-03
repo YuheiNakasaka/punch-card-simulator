@@ -74,6 +74,40 @@ body {
   font-weight: 400;
 }
 
+/* ---- Language Toggle ---- */
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  transition: background 0.15s;
+}
+
+.lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.lang-option {
+  font-weight: 400;
+  transition: color 0.15s, font-weight 0.15s;
+}
+
+.lang-option.active {
+  color: white;
+  font-weight: 700;
+}
+
+.lang-divider {
+  opacity: 0.5;
+}
+
 /* ---- Toolbar ---- */
 .toolbar {
   background: var(--surface);
@@ -535,6 +569,12 @@ select {
   border-top: 1px solid var(--border);
 }
 
+.exec-helper-text {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 1200px) {
   :root {
@@ -566,7 +606,7 @@ select {
   .app-header h1 { font-size: 1rem; }
   .app-header .subtitle { display: none; }
   .exec-bar { flex-wrap: wrap; }
-  .exec-bar span { display: none; }
+  .exec-helper-text { display: none; }
 }
 
 .zoom-level-label {

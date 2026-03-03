@@ -2,7 +2,9 @@ import { CardDeck } from './deck';
 import { CardRenderer, renderCardThumbnail } from './renderer';
 import { KeyboardHandler } from './keyboard';
 import { Interpreter } from './interpreter';
-import { renderEncodingTable, renderTutorial, EXAMPLES } from './tutorial';
+import { renderEncodingTable, renderTutorial, EXAMPLES, EXAMPLE_KEYS } from './tutorial';
+import { t, setLocale, getLocale, onLocaleChange, translateDOM } from './i18n';
+import type { Locale } from './i18n';
 
 function getElementById(id: string): HTMLElement {
   const el = document.getElementById(id);
@@ -92,12 +94,22 @@ export class App {
     // Bind tab navigation
     this._bindTabs();
 
+    // Bind language toggle
+    this._bindLangToggle();
+
     // Load examples dropdown
     this._buildExamplesDropdown();
+    this._bindExamplesDropdown();
 
-    // Render static content
+    // Translate DOM and render static content
+    translateDOM();
     renderTutorial(getElementById('tab-tutorial'));
     renderEncodingTable(getElementById('tab-reference'));
+
+    // Register locale change handler
+    onLocaleChange(() => {
+      this._onLocaleChanged();
+    });
 
     // Try to load saved deck
     this.deck.load();
@@ -125,7 +137,7 @@ export class App {
       const inputField = getElementById('terminal-input') as HTMLInputElement;
       const inputLabel = getElementById('terminal-input-label');
 
-      inputLabel.textContent = `Enter value for ${varName}:`;
+      inputLabel.textContent = t('app.inputPrompt', { varName });
       inputArea.classList.remove('hidden');
       inputField.value = '';
       inputField.focus();
@@ -196,7 +208,7 @@ export class App {
     });
 
     getElementById('btn-clear-deck').addEventListener('click', () => {
-      if (confirm('Clear all cards in the deck?')) {
+      if (confirm(t('app.confirmClearDeck'))) {
         this.deck.clearDeck();
         this.keyboard!.setCursor(0);
       }
@@ -228,19 +240,54 @@ export class App {
     });
   }
 
+  private _bindLangToggle(): void {
+    const toggle = getElementById('lang-toggle');
+    toggle.addEventListener('click', () => {
+      const newLocale: Locale = getLocale() === 'en' ? 'ja' : 'en';
+      setLocale(newLocale);
+    });
+    // Set initial active state
+    this._updateLangToggle();
+  }
+
+  private _updateLangToggle(): void {
+    const locale = getLocale();
+    document.querySelectorAll<HTMLElement>('.lang-option').forEach(el => {
+      el.classList.toggle('active', el.dataset.lang === locale);
+    });
+    document.documentElement.lang = locale;
+  }
+
+  private _onLocaleChanged(): void {
+    this._updateLangToggle();
+    translateDOM();
+    this._buildExamplesDropdown();
+    renderTutorial(getElementById('tab-tutorial'));
+    renderEncodingTable(getElementById('tab-reference'));
+    this._updateAll();
+  }
+
   private _buildExamplesDropdown(): void {
     const select = getElementById('examples-select') as HTMLSelectElement;
-    select.innerHTML = '<option value="">Load Example...</option>';
-    for (const name of Object.keys(EXAMPLES)) {
+    select.innerHTML = '';
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = t('toolbar.loadExample');
+    select.appendChild(defaultOpt);
+    for (const key of EXAMPLE_KEYS) {
       const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
+      opt.value = key;
+      opt.textContent = t(`examples.${key}`);
       select.appendChild(opt);
     }
+  }
+
+  private _bindExamplesDropdown(): void {
+    const select = getElementById('examples-select') as HTMLSelectElement;
     select.addEventListener('change', () => {
-      const name = select.value;
-      if (name && EXAMPLES[name]) {
-        this.deck.loadProgram(EXAMPLES[name]);
+      const key = select.value;
+      if (key && EXAMPLES[key]) {
+        this.deck.loadProgram(EXAMPLES[key]);
         this.keyboard!.setCursor(0);
         this._resetProgram();
         select.value = '';
@@ -291,7 +338,7 @@ export class App {
     this.renderer!.render(this.deck.currentCard);
 
     getElementById('card-counter').textContent =
-      `Card ${this.deck.currentIndex + 1} of ${this.deck.length}`;
+      t('app.cardCounter', { current: this.deck.currentIndex + 1, total: this.deck.length });
 
     (getElementById('btn-prev') as HTMLButtonElement).disabled = this.deck.currentIndex === 0;
 

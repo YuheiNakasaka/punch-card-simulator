@@ -1,96 +1,211 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Punch Card Programming Simulator</title>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Punch Card Programming Simulator</title>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="app-header">
+      <div>
+        <h1 data-i18n="meta.headerTitle">PUNCH CARD SIMULATOR</h1>
+        <span class="subtitle" data-i18n="meta.subtitle"
+          >IBM 80-Column Card &mdash; Interactive Programming Experience</span
+        >
+      </div>
+      <button id="lang-toggle" class="lang-toggle">
+        <span class="lang-option active" data-lang="en">EN</span>
+        <span class="lang-divider">/</span>
+        <span class="lang-option" data-lang="ja">JA</span>
+      </button>
+    </header>
 
-  <!-- Header -->
-  <header class="app-header">
-    <div>
-      <h1>PUNCH CARD SIMULATOR</h1>
-      <span class="subtitle">IBM 80-Column Card &mdash; Interactive Programming Experience</span>
-    </div>
-  </header>
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <button
+          id="btn-prev"
+          class="btn"
+          data-i18n="toolbar.prev"
+          data-i18n-title="tooltips.prev"
+          title="Previous card"
+        >
+          &larr; Prev
+        </button>
+        <span id="card-counter">Card 1 of 1</span>
+        <button
+          id="btn-next"
+          class="btn"
+          data-i18n="toolbar.next"
+          data-i18n-title="tooltips.next"
+          title="Next card (or add new)"
+        >
+          Next &rarr;
+        </button>
+      </div>
 
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <div class="toolbar-group">
-      <button id="btn-prev" class="btn" title="Previous card">&larr; Prev</button>
-      <span id="card-counter">Card 1 of 1</span>
-      <button id="btn-next" class="btn" title="Next card (or add new)">Next &rarr;</button>
-    </div>
+      <div class="toolbar-divider"></div>
 
-    <div class="toolbar-divider"></div>
+      <div class="toolbar-group">
+        <button
+          id="btn-add"
+          class="btn"
+          data-i18n="toolbar.addCard"
+          data-i18n-title="tooltips.addCard"
+          title="Insert new card after current"
+        >
+          + Add Card
+        </button>
+        <button
+          id="btn-remove"
+          class="btn btn-danger"
+          data-i18n="toolbar.remove"
+          data-i18n-title="tooltips.remove"
+          title="Remove current card"
+        >
+          &times; Remove
+        </button>
+        <button
+          id="btn-clear-card"
+          class="btn"
+          data-i18n="toolbar.clearCard"
+          data-i18n-title="tooltips.clearCard"
+          title="Clear current card"
+        >
+          Clear Card
+        </button>
+        <button
+          id="btn-clear-deck"
+          class="btn btn-danger"
+          data-i18n="toolbar.clearDeck"
+          data-i18n-title="tooltips.clearDeck"
+          title="Clear all cards"
+        >
+          Clear Deck
+        </button>
+      </div>
 
-    <div class="toolbar-group">
-      <button id="btn-add" class="btn" title="Insert new card after current">+ Add Card</button>
-      <button id="btn-remove" class="btn btn-danger" title="Remove current card">&times; Remove</button>
-      <button id="btn-clear-card" class="btn" title="Clear current card">Clear Card</button>
-      <button id="btn-clear-deck" class="btn btn-danger" title="Clear all cards">Clear Deck</button>
-    </div>
+      <div class="toolbar-divider"></div>
 
-    <div class="toolbar-divider"></div>
+      <div class="toolbar-group">
+        <select
+          id="examples-select"
+          data-i18n-title="tooltips.loadExample"
+          title="Load example program"
+        >
+          <option value="" data-i18n="toolbar.loadExample">
+            Load Example...
+          </option>
+        </select>
+      </div>
 
-    <div class="toolbar-group">
-      <select id="examples-select" title="Load example program">
-        <option value="">Load Example...</option>
-      </select>
-    </div>
+      <div class="toolbar-divider"></div>
 
-    <div class="toolbar-divider"></div>
-
-    <div class="toolbar-group zoom-controls">
-      <button id="btn-zoom-out" class="btn" title="Zoom out">-</button>
-      <span id="zoom-level" class="zoom-level-label">100%</span>
-      <button id="btn-zoom-in" class="btn" title="Zoom in">+</button>
-      <button id="btn-zoom-reset" class="btn" title="Reset zoom">Reset</button>
-    </div>
-  </div>
-
-  <!-- Punch Card Area -->
-  <div class="card-area">
-    <div id="card-container"></div>
-  </div>
-
-  <!-- Tab Bar -->
-  <div class="tab-bar">
-    <button class="tab-btn active" data-tab="deck">Deck</button>
-    <button class="tab-btn" data-tab="output">Output</button>
-    <button class="tab-btn" data-tab="reference">Encoding</button>
-    <button class="tab-btn" data-tab="tutorial">Tutorial</button>
-  </div>
-
-  <!-- Tab Panels -->
-  <div class="tab-content">
-    <div id="tab-deck" class="tab-panel active">
-      <div id="deck-overview"></div>
-    </div>
-
-    <div id="tab-output" class="tab-panel">
-      <div id="terminal-output"></div>
-      <div id="terminal-input-area" class="hidden">
-        <span id="terminal-input-label"></span>
-        <input id="terminal-input" type="text" autocomplete="off">
+      <div class="toolbar-group zoom-controls">
+        <button
+          id="btn-zoom-out"
+          class="btn"
+          data-i18n-title="tooltips.zoomOut"
+          title="Zoom out"
+        >
+          -
+        </button>
+        <span id="zoom-level" class="zoom-level-label">100%</span>
+        <button
+          id="btn-zoom-in"
+          class="btn"
+          data-i18n-title="tooltips.zoomIn"
+          title="Zoom in"
+        >
+          +
+        </button>
+        <button
+          id="btn-zoom-reset"
+          class="btn"
+          data-i18n="toolbar.zoomReset"
+          data-i18n-title="tooltips.zoomReset"
+          title="Reset zoom"
+        >
+          Reset
+        </button>
       </div>
     </div>
 
-    <div id="tab-reference" class="tab-panel"></div>
-    <div id="tab-tutorial" class="tab-panel"></div>
-  </div>
+    <!-- Punch Card Area -->
+    <div class="card-area">
+      <div id="card-container"></div>
+    </div>
 
-  <!-- Execution Bar -->
-  <div class="exec-bar">
-    <button id="btn-run" class="btn btn-primary" title="Run entire program">&#9654; Run</button>
-    <button id="btn-step" class="btn" title="Execute one instruction">Step</button>
-    <button id="btn-reset" class="btn" title="Reset execution state">Reset</button>
-    <span style="color: var(--text-dim); font-size: 0.75rem; margin-left: 0.5rem;">
-      Type to punch characters &bull; Click cells to toggle &bull; Arrow keys to navigate
-    </span>
-  </div>
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="deck" data-i18n="tabs.deck">
+        Deck
+      </button>
+      <button class="tab-btn" data-tab="output" data-i18n="tabs.output">
+        Output
+      </button>
+      <button class="tab-btn" data-tab="reference" data-i18n="tabs.encoding">
+        Encoding
+      </button>
+      <button class="tab-btn" data-tab="tutorial" data-i18n="tabs.tutorial">
+        Tutorial
+      </button>
+    </div>
 
-  <script type="module" src="/src/main.ts"></script>
-</body>
+    <!-- Tab Panels -->
+    <div class="tab-content">
+      <div id="tab-deck" class="tab-panel active">
+        <div id="deck-overview"></div>
+      </div>
+
+      <div id="tab-output" class="tab-panel">
+        <div id="terminal-output"></div>
+        <div id="terminal-input-area" class="hidden">
+          <span id="terminal-input-label"></span>
+          <input id="terminal-input" type="text" autocomplete="off" />
+        </div>
+      </div>
+
+      <div id="tab-reference" class="tab-panel"></div>
+      <div id="tab-tutorial" class="tab-panel"></div>
+    </div>
+
+    <!-- Execution Bar -->
+    <div class="exec-bar">
+      <button
+        id="btn-run"
+        class="btn btn-primary"
+        data-i18n="exec.run"
+        data-i18n-title="tooltips.run"
+        title="Run entire program"
+      >
+        &#9654; Run
+      </button>
+      <button
+        id="btn-step"
+        class="btn"
+        data-i18n="exec.step"
+        data-i18n-title="tooltips.step"
+        title="Execute one instruction"
+      >
+        Step
+      </button>
+      <button
+        id="btn-reset"
+        class="btn"
+        data-i18n="exec.reset"
+        data-i18n-title="tooltips.reset"
+        title="Reset execution state"
+      >
+        Reset
+      </button>
+      <span class="exec-helper-text" data-i18n="exec.helperText">
+        Type to punch characters &bull; Click cells to toggle &bull; Arrow keys
+        to navigate
+      </span>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

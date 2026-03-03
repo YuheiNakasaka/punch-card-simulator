@@ -1,5 +1,6 @@
 import { COLS, ROWS, ROW_LABELS } from './encoding';
 import { PunchCard } from './card';
+import { t } from './i18n';
 
 export class CardRenderer {
   container: HTMLElement;
@@ -123,12 +124,12 @@ export function renderCardThumbnail(card: PunchCard, index: number, isCurrent: b
 
   const label = document.createElement('div');
   label.className = 'thumb-label';
-  label.textContent = `Card ${index + 1}`;
+  label.textContent = t('renderer.cardLabel', { n: index + 1 });
   thumb.appendChild(label);
 
   const text = document.createElement('div');
   text.className = 'thumb-text';
-  text.textContent = card.readText().substring(0, 40) || '(blank)';
+  text.textContent = card.readText().substring(0, 40) || t('renderer.blank');
   thumb.appendChild(text);
 
   // Mini grid visualization

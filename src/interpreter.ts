@@ -1,3 +1,5 @@
+import { t } from './i18n';
+
 const MAX_STEPS = 10000;
 
 export class Interpreter {
@@ -79,12 +81,12 @@ export class Interpreter {
 
   step(): boolean {
     if (this.pc >= this.program.length) {
-      this._finish('Program ended.');
+      this._finish(t('interpreter.programEnded'));
       return false;
     }
 
     if (this.stepCount >= MAX_STEPS) {
-      this._finish('Execution stopped: maximum steps (10,000) reached.');
+      this._finish(t('interpreter.maxSteps'));
       return false;
     }
 
@@ -138,8 +140,8 @@ export class Interpreter {
         const val = this._getVal(args[1]);
         if (varName) {
           if (val === 0) {
-            this._output('Error: Division by zero');
-            this._finish('Program error.');
+            this._output(t('interpreter.divisionByZero'));
+            this._finish(t('interpreter.programError'));
             return false;
           }
           this.variables[varName] = (this.variables[varName] || 0) / val;
@@ -165,8 +167,8 @@ export class Interpreter {
         if (this.labels[label] !== undefined) {
           this.pc = this.labels[label];
         } else {
-          this._output(`Error: Unknown label '${label}'`);
-          this._finish('Program error.');
+          this._output(t('interpreter.unknownLabel', { label }));
+          this._finish(t('interpreter.programError'));
           return false;
         }
         break;
@@ -180,8 +182,8 @@ export class Interpreter {
           if (this.labels[label] !== undefined) {
             this.pc = this.labels[label];
           } else {
-            this._output(`Error: Unknown label '${label}'`);
-            this._finish('Program error.');
+            this._output(t('interpreter.unknownLabel', { label }));
+            this._finish(t('interpreter.programError'));
             return false;
           }
         } else {
@@ -198,8 +200,8 @@ export class Interpreter {
           if (this.labels[label] !== undefined) {
             this.pc = this.labels[label];
           } else {
-            this._output(`Error: Unknown label '${label}'`);
-            this._finish('Program error.');
+            this._output(t('interpreter.unknownLabel', { label }));
+            this._finish(t('interpreter.programError'));
             return false;
           }
         } else {
@@ -229,7 +231,7 @@ export class Interpreter {
       }
 
       case 'END':
-        this._finish('Program ended.');
+        this._finish(t('interpreter.programEnded'));
         return false;
 
       case 'REM':
@@ -237,7 +239,7 @@ export class Interpreter {
         break;
 
       default:
-        this._output(`Unknown instruction: ${op}`);
+        this._output(t('interpreter.unknownInstruction', { op }));
         this.pc++;
         break;
     }
