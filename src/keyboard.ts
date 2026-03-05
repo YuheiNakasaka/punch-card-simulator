@@ -15,6 +15,7 @@ export class KeyboardHandler {
   onNextCard: () => void;
   cursorCol: number;
   enabled: boolean;
+  characterInputEnabled: boolean;
   private _handler: (e: KeyboardEvent) => void;
   private _element: EventTarget | null;
 
@@ -25,6 +26,7 @@ export class KeyboardHandler {
     this.onNextCard = onNextCard;
     this.cursorCol = 0;
     this.enabled = true;
+    this.characterInputEnabled = true;
     this._handler = this._handleKey.bind(this);
     this._element = null;
   }
@@ -100,6 +102,7 @@ export class KeyboardHandler {
         break;
 
       default:
+        if (!this.characterInputEnabled) break;
         if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
           const upper = e.key.toUpperCase();
           if (CHAR_TO_PUNCHES[upper] !== undefined) {

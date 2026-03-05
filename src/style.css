@@ -112,6 +112,47 @@ body {
   opacity: 0.5;
 }
 
+/* ---- Header Toggles ---- */
+.header-toggles {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ---- Mode Toggle ---- */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  transition: background 0.15s;
+}
+
+.mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.mode-option {
+  font-weight: 400;
+  transition: color 0.15s, font-weight 0.15s;
+}
+
+.mode-option.active {
+  color: white;
+  font-weight: 700;
+}
+
+.mode-divider {
+  opacity: 0.5;
+}
+
 /* ---- Toolbar ---- */
 .toolbar {
   background: var(--surface);
@@ -307,6 +348,17 @@ select {
 .grid-cell.cursor.punched {
   background: var(--punch-hole);
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 0 0 1px rgba(255, 200, 50, 0.6);
+}
+
+/* Hard mode: enhanced hover to hint clickability */
+.punch-card.hard-mode .grid-cell:hover {
+  background: rgba(62, 39, 35, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(62, 39, 35, 0.3);
+}
+
+.punch-card.hard-mode .grid-cell.punched:hover {
+  background: var(--punch-hole);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 0 0 1px rgba(255, 200, 50, 0.4);
 }
 
 /* ---- Tab Panel ---- */

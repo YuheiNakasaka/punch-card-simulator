@@ -5,6 +5,8 @@ import { Interpreter } from './interpreter';
 import { renderEncodingTable, renderTutorial, EXAMPLES, EXAMPLE_KEYS } from './tutorial';
 import { t, setLocale, getLocale, onLocaleChange, translateDOM } from './i18n';
 import type { Locale } from './i18n';
+import { getMode, setMode, onModeChange, initMode } from './mode';
+import type { InputMode } from './mode';
 
 function getElementById(id: string): HTMLElement {
   const el = document.getElementById(id);
@@ -96,6 +98,12 @@ export class App {
 
     // Bind language toggle
     this._bindLangToggle();
+
+    // Initialize mode toggle
+    initMode();
+    this._bindModeToggle();
+    onModeChange(() => this._onModeChanged());
+    this._applyMode(getMode());
 
     // Bind Command+Enter shortcut
     document.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -273,6 +281,41 @@ export class App {
     renderTutorial(getElementById('tab-tutorial'));
     renderEncodingTable(getElementById('tab-reference'));
     this._updateAll();
+  }
+
+  private _bindModeToggle(): void {
+    const toggle = getElementById('mode-toggle');
+    toggle.addEventListener('click', () => {
+      const newMode: InputMode = getMode() === 'easy' ? 'hard' : 'easy';
+      setMode(newMode);
+    });
+    this._updateModeToggle();
+  }
+
+  private _updateModeToggle(): void {
+    const mode = getMode();
+    document.querySelectorAll<HTMLElement>('.mode-option').forEach(el => {
+      el.classList.toggle('active', el.dataset.mode === mode);
+    });
+  }
+
+  private _applyMode(mode: InputMode): void {
+    this.keyboard!.characterInputEnabled = mode === 'easy';
+    const helperKey = mode === 'easy' ? 'exec.helperText' : 'exec.helperTextHard';
+    const helperEl = document.querySelector<HTMLElement>('.exec-helper-text');
+    if (helperEl) {
+      helperEl.textContent = t(helperKey);
+      helperEl.dataset.i18n = helperKey;
+    }
+    const cardEl = document.querySelector<HTMLElement>('.punch-card');
+    if (cardEl) {
+      cardEl.classList.toggle('hard-mode', mode === 'hard');
+    }
+  }
+
+  private _onModeChanged(): void {
+    this._updateModeToggle();
+    this._applyMode(getMode());
   }
 
   private _buildExamplesDropdown(): void {

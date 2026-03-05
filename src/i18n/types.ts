@@ -35,6 +35,12 @@ export interface Translations {
     step: string;
     reset: string;
     helperText: string;
+    helperTextHard: string;
+  };
+  mode: {
+    easy: string;
+    hard: string;
+    tooltip: string;
   };
   tabs: {
     deck: string;

@@ -39,6 +39,13 @@ export const ja: Translations = {
     reset: "\u30EA\u30BB\u30C3\u30C8",
     helperText:
       "\u30AD\u30FC\u5165\u529B\u3067\u30D1\u30F3\u30C1 \u2022 \u30BB\u30EB\u30AF\u30EA\u30C3\u30AF\u3067\u5207\u66FF \u2022 \u77E2\u5370\u30AD\u30FC\u3067\u79FB\u52D5",
+    helperTextHard:
+      "\u30BB\u30EB\u30AF\u30EA\u30C3\u30AF\u3067\u30D1\u30F3\u30C1 \u2022 \u77E2\u5370\u30AD\u30FC\u3067\u79FB\u52D5",
+  },
+  mode: {
+    easy: "EASY",
+    hard: "HARD",
+    tooltip: "\u5165\u529B\u30E2\u30FC\u30C9\u5207\u66FF",
   },
   tabs: {
     deck: "\u30C7\u30C3\u30AD",

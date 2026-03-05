@@ -36,6 +36,13 @@ export const en: Translations = {
     reset: "Reset",
     helperText:
       "Type to punch characters \u2022 Click cells to toggle \u2022 Arrow keys to navigate",
+    helperTextHard:
+      "Click cells to punch holes \u2022 Arrow keys to navigate",
+  },
+  mode: {
+    easy: "EASY",
+    hard: "HARD",
+    tooltip: "Toggle input mode",
   },
   tabs: {
     deck: "Deck",
