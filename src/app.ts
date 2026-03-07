@@ -2,6 +2,9 @@ import { CardDeck } from './deck';
 import { CardRenderer, renderCardThumbnail } from './renderer';
 import { KeyboardHandler } from './keyboard';
 import { Interpreter } from './interpreter';
+import { JobProcessor } from './jobProcessor';
+import type { SpeedPreset } from './jobProcessor';
+import { initAudio, isMuted, toggleMute, playKeypunch, playCardReader, playPrinterClick, playJobBell } from './audio';
 import { renderEncodingTable, renderTutorial, EXAMPLES, EXAMPLE_KEYS } from './tutorial';
 import { t, setLocale, getLocale, onLocaleChange, translateDOM } from './i18n';
 import type { Locale } from './i18n';
@@ -27,6 +30,7 @@ interface BaseSizes {
 export class App {
   deck: CardDeck;
   interpreter: Interpreter;
+  jobProcessor: JobProcessor;
   renderer: CardRenderer | null;
   keyboard: KeyboardHandler | null;
   private _autoSaveTimer: ReturnType<typeof setTimeout> | null;
@@ -35,6 +39,7 @@ export class App {
   constructor() {
     this.deck = new CardDeck();
     this.interpreter = new Interpreter();
+    this.jobProcessor = new JobProcessor();
     this.renderer = null;
     this.keyboard = null;
     this._autoSaveTimer = null;
@@ -42,6 +47,9 @@ export class App {
   }
 
   init(): void {
+    // Initialize audio
+    initAudio();
+
     // Initialize renderer
     const cardContainer = getElementById('card-container');
     this.renderer = new CardRenderer(cardContainer);
@@ -53,6 +61,7 @@ export class App {
       this.keyboard!.setCursor(col);
       this._updateDeckOverview();
       this._scheduleSave();
+      playKeypunch();
     };
 
     // Initialize keyboard
@@ -65,6 +74,7 @@ export class App {
         this.renderer!.render(this.deck.currentCard);
         this._updateDeckOverview();
         this._scheduleSave();
+        playKeypunch();
       },
       onNextCard: () => {
         if (this.deck.currentIndex === this.deck.length - 1) {
@@ -87,6 +97,9 @@ export class App {
     // Setup interpreter callbacks
     this._setupInterpreter();
 
+    // Setup job processor callbacks
+    this._setupJobProcessor();
+
     // Bind toolbar buttons
     this._bindToolbar();
 
@@ -99,6 +112,12 @@ export class App {
     // Bind language toggle
     this._bindLangToggle();
 
+    // Bind audio toggle
+    this._bindAudioToggle();
+
+    // Bind speed control
+    this._bindSpeedControl();
+
     // Initialize mode toggle
     initMode();
     this._bindModeToggle();
@@ -109,7 +128,7 @@ export class App {
     document.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.metaKey && e.key === 'Enter') {
         e.preventDefault();
-        this._runProgram();
+        this._submitJob();
       }
     });
 
@@ -132,6 +151,7 @@ export class App {
 
     // Initial render
     this._updateAll();
+    this._updateAudioToggle();
 
     // Focus for keyboard
     getElementById('card-container').setAttribute('tabindex', '0');
@@ -146,6 +166,20 @@ export class App {
       line.textContent = `> ${text}`;
       output.appendChild(line);
       output.scrollTop = output.scrollHeight;
+    };
+
+    this.interpreter.onCharOutput = async (char: string) => {
+      // For line printer effect: append char to current line
+      let currentLine = output.querySelector('.terminal-line-typing') as HTMLElement | null;
+      if (!currentLine) {
+        currentLine = document.createElement('div');
+        currentLine.className = 'terminal-line terminal-line-typing';
+        currentLine.textContent = '> ';
+        output.appendChild(currentLine);
+      }
+      currentLine.textContent += char;
+      output.scrollTop = output.scrollHeight;
+      playPrinterClick();
     };
 
     this.interpreter.onInput = (varName: string, callback: (value: string) => void) => {
@@ -182,6 +216,10 @@ export class App {
     };
 
     this.interpreter.onFinish = (message: string) => {
+      // Finalize any in-progress typing line
+      const typingLine = getElementById('terminal-output').querySelector('.terminal-line-typing');
+      if (typingLine) typingLine.classList.remove('terminal-line-typing');
+
       const line = document.createElement('div');
       line.className = 'terminal-line system';
       line.textContent = `--- ${message} ---`;
@@ -189,6 +227,52 @@ export class App {
       output.scrollTop = output.scrollHeight;
       this._updateRunButtons();
     };
+  }
+
+  private _setupJobProcessor(): void {
+    const output = getElementById('terminal-output');
+    const phaseLabel = getElementById('job-phase');
+
+    this.jobProcessor.onPhaseChange = (_phase, message) => {
+      phaseLabel.textContent = message;
+      this._updateRunButtons();
+    };
+
+    this.jobProcessor.onOutput = (text: string) => {
+      const line = document.createElement('div');
+      line.className = 'terminal-line system';
+      line.textContent = text;
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    };
+
+    this.jobProcessor.onCardRead = (cardIndex: number) => {
+      if (cardIndex < this.deck.length) {
+        this.deck.goTo(cardIndex);
+        this._markCardAsRead(cardIndex);
+      }
+      playCardReader();
+    };
+  }
+
+  private _markCardAsRead(cardIndex: number): void {
+    const thumbs = document.querySelectorAll('.card-thumbnail');
+    thumbs.forEach((thumb, i) => {
+      if (i < cardIndex) {
+        thumb.classList.add('card-read');
+      } else if (i === cardIndex) {
+        thumb.classList.add('card-reading');
+        thumb.classList.remove('card-read');
+      } else {
+        thumb.classList.remove('card-read', 'card-reading');
+      }
+    });
+  }
+
+  private _clearCardReadStates(): void {
+    document.querySelectorAll('.card-thumbnail').forEach(thumb => {
+      thumb.classList.remove('card-read', 'card-reading');
+    });
   }
 
   private _bindToolbar(): void {
@@ -231,7 +315,11 @@ export class App {
     });
 
     getElementById('btn-run').addEventListener('click', () => {
-      this._runProgram();
+      this._submitJob();
+    });
+
+    getElementById('btn-stop').addEventListener('click', () => {
+      this._stopJob();
     });
 
     getElementById('btn-step').addEventListener('click', () => {
@@ -274,8 +362,42 @@ export class App {
     document.documentElement.lang = locale;
   }
 
+  private _bindAudioToggle(): void {
+    getElementById('audio-toggle').addEventListener('click', () => {
+      toggleMute();
+      this._updateAudioToggle();
+    });
+  }
+
+  private _updateAudioToggle(): void {
+    const label = getElementById('audio-label');
+    label.textContent = isMuted() ? t('audio.mute') : t('audio.unmute');
+  }
+
+  private _bindSpeedControl(): void {
+    const select = getElementById('speed-select') as HTMLSelectElement;
+    select.addEventListener('change', () => {
+      const speed = select.value as SpeedPreset;
+      this.jobProcessor.speed = speed;
+      const cfg = this.jobProcessor.config;
+      this.interpreter.speed = {
+        instructionMs: cfg.instructionMs,
+        charOutputMs: cfg.charOutputMs,
+      };
+    });
+    // Apply initial speed
+    const initialSpeed = select.value as SpeedPreset;
+    this.jobProcessor.speed = initialSpeed;
+    const cfg = this.jobProcessor.config;
+    this.interpreter.speed = {
+      instructionMs: cfg.instructionMs,
+      charOutputMs: cfg.charOutputMs,
+    };
+  }
+
   private _onLocaleChanged(): void {
     this._updateLangToggle();
+    this._updateAudioToggle();
     translateDOM();
     this._buildExamplesDropdown();
     renderTutorial(getElementById('tab-tutorial'));
@@ -346,18 +468,57 @@ export class App {
     });
   }
 
-  private _runProgram(): void {
-    if (!this.interpreter.running && !this.interpreter.waitingForInput) {
-      const lines = this.deck.readAllText();
-      this.interpreter.load(lines);
-      this._clearTerminal();
-      this.interpreter.run();
+  private _submitJob(): void {
+    if (this.jobProcessor.isRunning()) return;
+
+    const lines = this.deck.readAllText();
+    this.interpreter.load(lines);
+    this._clearTerminal();
+    this._clearCardReadStates();
+    this._updateRunButtons();
+    this._switchToOutputTab();
+
+    // Sync speed config
+    const cfg = this.jobProcessor.config;
+    this.interpreter.speed = {
+      instructionMs: cfg.instructionMs,
+      charOutputMs: cfg.charOutputMs,
+    };
+
+    if (this.jobProcessor.speed === 'instant') {
+      // Synchronous path — no async yielding, tests work deterministically
+      this.jobProcessor.submitJobSync(
+        this.deck.length,
+        () => { this.interpreter.run(); },
+      );
+      playJobBell();
+      this._clearCardReadStates();
+      getElementById('job-phase').textContent = '';
       this._updateRunButtons();
-      this._switchToOutputTab();
+    } else {
+      // Async path — full mainframe experience with delays
+      this.jobProcessor.submitJob(
+        this.deck.length,
+        async () => {
+          return this.interpreter.runAsync();
+        },
+      ).then(() => {
+        playJobBell();
+        this._clearCardReadStates();
+        getElementById('job-phase').textContent = '';
+        this._updateRunButtons();
+      });
     }
   }
 
+  private _stopJob(): void {
+    this.jobProcessor.abort();
+    this.interpreter.abort();
+    this._updateRunButtons();
+  }
+
   private _stepProgram(): void {
+    if (this.jobProcessor.isRunning()) return;
     if (!this.interpreter.running && !this.interpreter.waitingForInput) {
       if (this.interpreter.pc === 0 && this.interpreter.stepCount === 0) {
         const lines = this.deck.readAllText();
@@ -372,6 +533,8 @@ export class App {
   private _resetProgram(): void {
     this.interpreter.reset();
     this._clearTerminal();
+    this._clearCardReadStates();
+    getElementById('job-phase').textContent = '';
     this._updateRunButtons();
     getElementById('terminal-input-area').classList.add('hidden');
   }
@@ -388,9 +551,18 @@ export class App {
   }
 
   private _updateRunButtons(): void {
-    const running = this.interpreter.running;
-    (getElementById('btn-run') as HTMLButtonElement).disabled = running;
-    (getElementById('btn-step') as HTMLButtonElement).disabled = running;
+    const jobRunning = this.jobProcessor.isRunning();
+    const interpreterRunning = this.interpreter.running;
+    const busy = jobRunning || interpreterRunning;
+
+    const btnRun = getElementById('btn-run') as HTMLButtonElement;
+    const btnStop = getElementById('btn-stop') as HTMLButtonElement;
+    const btnStep = getElementById('btn-step') as HTMLButtonElement;
+
+    btnRun.disabled = busy;
+    btnRun.classList.toggle('hidden', busy);
+    btnStop.classList.toggle('hidden', !busy);
+    btnStep.disabled = busy;
   }
 
   private _updateAll(): void {

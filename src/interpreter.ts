@@ -2,6 +2,15 @@ import { t } from './i18n';
 
 const MAX_STEPS = 10000;
 
+export interface InterpreterSpeed {
+  instructionMs: number;
+  charOutputMs: number;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export class Interpreter {
   variables: Record<string, number>;
   labels: Record<string, number>;
@@ -10,11 +19,16 @@ export class Interpreter {
   stepCount: number;
   running: boolean;
   waitingForInput: boolean;
+  hasError: boolean;
+  speed: InterpreterSpeed = { instructionMs: 0, charOutputMs: 0 };
+  private _aborted: boolean;
   private _inputVar: string | null;
   private _onOutput: ((text: string) => void) | null;
+  private _onCharOutput: ((char: string) => Promise<void> | void) | null;
   private _onInput: ((varName: string, callback: (value: string) => void) => void) | null;
   private _onStep: ((pc: number, line: string) => void) | null;
   private _onFinish: ((message: string) => void) | null;
+  private _onCardRead: ((cardIndex: number) => void) | null;
 
   constructor() {
     this.variables = {};
@@ -24,17 +38,23 @@ export class Interpreter {
     this.stepCount = 0;
     this.running = false;
     this.waitingForInput = false;
+    this.hasError = false;
+    this._aborted = false;
     this._inputVar = null;
     this._onOutput = null;
+    this._onCharOutput = null;
     this._onInput = null;
     this._onStep = null;
     this._onFinish = null;
+    this._onCardRead = null;
   }
 
   set onOutput(fn: (text: string) => void) { this._onOutput = fn; }
+  set onCharOutput(fn: (char: string) => Promise<void> | void) { this._onCharOutput = fn; }
   set onInput(fn: (varName: string, callback: (value: string) => void) => void) { this._onInput = fn; }
   set onStep(fn: (pc: number, line: string) => void) { this._onStep = fn; }
   set onFinish(fn: (message: string) => void) { this._onFinish = fn; }
+  set onCardRead(fn: (cardIndex: number) => void) { this._onCardRead = fn; }
 
   reset(): void {
     this.variables = {};
@@ -44,7 +64,14 @@ export class Interpreter {
     this.stepCount = 0;
     this.running = false;
     this.waitingForInput = false;
+    this.hasError = false;
+    this._aborted = false;
     this._inputVar = null;
+  }
+
+  abort(): void {
+    this._aborted = true;
+    this.running = false;
   }
 
   load(lines: string[]): void {
@@ -79,6 +106,19 @@ export class Interpreter {
     if (this._onOutput) this._onOutput(text);
   }
 
+  /** Output text character-by-character with delay (for line printer effect) */
+  private async _outputWithDelay(text: string): Promise<void> {
+    if (this.speed.charOutputMs <= 0 || !this._onCharOutput) {
+      this._output(text);
+      return;
+    }
+    for (const char of text) {
+      if (this._aborted) return;
+      await this._onCharOutput(char);
+      await delay(this.speed.charOutputMs);
+    }
+  }
+
   step(): boolean {
     if (this.pc >= this.program.length) {
       this._finish(t('interpreter.programEnded'));
@@ -86,7 +126,8 @@ export class Interpreter {
     }
 
     if (this.stepCount >= MAX_STEPS) {
-      this._finish(t('interpreter.maxSteps'));
+      this._output(t('interpreter.abendTimeLimit'));
+      this._finish(t('interpreter.maxSteps'), true);
       return false;
     }
 
@@ -140,8 +181,9 @@ export class Interpreter {
         const val = this._getVal(args[1]);
         if (varName) {
           if (val === 0) {
+            this._output(t('interpreter.abendDivZero', { n: this.pc + 1 }));
             this._output(t('interpreter.divisionByZero'));
-            this._finish(t('interpreter.programError'));
+            this._finish(t('interpreter.programError'), true);
             return false;
           }
           this.variables[varName] = (this.variables[varName] || 0) / val;
@@ -167,8 +209,9 @@ export class Interpreter {
         if (this.labels[label] !== undefined) {
           this.pc = this.labels[label];
         } else {
+          this._output(t('interpreter.abendLabelNotFound', { label }));
           this._output(t('interpreter.unknownLabel', { label }));
-          this._finish(t('interpreter.programError'));
+          this._finish(t('interpreter.programError'), true);
           return false;
         }
         break;
@@ -182,8 +225,9 @@ export class Interpreter {
           if (this.labels[label] !== undefined) {
             this.pc = this.labels[label];
           } else {
+            this._output(t('interpreter.abendLabelNotFound', { label }));
             this._output(t('interpreter.unknownLabel', { label }));
-            this._finish(t('interpreter.programError'));
+            this._finish(t('interpreter.programError'), true);
             return false;
           }
         } else {
@@ -200,8 +244,9 @@ export class Interpreter {
           if (this.labels[label] !== undefined) {
             this.pc = this.labels[label];
           } else {
+            this._output(t('interpreter.abendLabelNotFound', { label }));
             this._output(t('interpreter.unknownLabel', { label }));
-            this._finish(t('interpreter.programError'));
+            this._finish(t('interpreter.programError'), true);
             return false;
           }
         } else {
@@ -221,7 +266,7 @@ export class Interpreter {
             this._inputVar = null;
             this.pc++;
             if (this.running) {
-              this._runLoop();
+              this._runLoopAsync();
             }
           });
           return true;
@@ -239,6 +284,7 @@ export class Interpreter {
         break;
 
       default:
+        this._output(t('interpreter.abendInvalidOp', { op }));
         this._output(t('interpreter.unknownInstruction', { op }));
         this.pc++;
         break;
@@ -247,20 +293,52 @@ export class Interpreter {
     return true;
   }
 
-  private _finish(message: string): void {
+  private _finish(message: string, isError = false): void {
     this.running = false;
+    if (isError) this.hasError = true;
     if (this._onFinish) this._onFinish(message);
   }
 
+  /** Synchronous run — used for Instant speed and backward compat */
   run(): void {
     this.running = true;
-    this._runLoop();
+    this._aborted = false;
+    if (this.speed.instructionMs <= 0) {
+      this._runLoopSync();
+    } else {
+      this._runLoopAsync();
+    }
   }
 
-  private _runLoop(): void {
+  /** Async run — used for delayed execution. Runs sync if speed is 0. */
+  async runAsync(): Promise<string | null> {
+    this.running = true;
+    this._aborted = false;
+    if (this.speed.instructionMs <= 0) {
+      this._runLoopSync();
+      return null;
+    }
+    return this._runLoopAsync();
+  }
+
+  private _runLoopSync(): void {
     while (this.running && !this.waitingForInput) {
       if (!this.step()) break;
     }
+  }
+
+  private async _runLoopAsync(): Promise<string | null> {
+    while (this.running && !this.waitingForInput && !this._aborted) {
+      const cont = this.step();
+      if (!cont) {
+        return this.hasError ? 'error' : null;
+      }
+      if (this.speed.instructionMs > 0) {
+        await delay(this.speed.instructionMs);
+      }
+    }
+    if (this._aborted) return 'aborted';
+    return null;
   }
 
   stepOnce(): boolean {

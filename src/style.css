@@ -465,10 +465,35 @@ select {
   image-rendering: pixelated;
 }
 
-/* Terminal / Output */
+/* Terminal / Output — CRT Screen Effect */
 #tab-output {
   background: var(--terminal-bg);
   font-family: 'IBM Plex Mono', monospace;
+  position: relative;
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 60px rgba(0, 255, 0, 0.03),
+    0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Scanline overlay */
+#tab-output::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.15) 2px,
+    rgba(0, 0, 0, 0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+  border-radius: 8px;
 }
 
 #terminal-output {
@@ -476,10 +501,18 @@ select {
   font-size: 0.85rem;
   line-height: 1.5;
   white-space: pre-wrap;
+  text-shadow: 0 0 5px rgba(51, 255, 51, 0.4);
+  position: relative;
+  z-index: 0;
 }
 
 .terminal-line {
   padding: 1px 0;
+}
+
+/* Green-white alternating stripes for line printer feel */
+.terminal-line:nth-child(even) {
+  background: rgba(51, 255, 51, 0.03);
 }
 
 .terminal-line.system {
@@ -489,6 +522,17 @@ select {
 
 .terminal-line.input-echo {
   color: #FFCC00;
+}
+
+/* Blinking cursor after output */
+.terminal-cursor-blink::after {
+  content: '_';
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 #terminal-input-area {
@@ -636,6 +680,74 @@ select {
   color: var(--text-dim);
   font-size: 0.75rem;
   margin-left: 0.5rem;
+}
+
+/* Hidden utility */
+.hidden {
+  display: none !important;
+}
+
+/* Speed control */
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.speed-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.speed-control select {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.3rem;
+}
+
+/* Job phase label */
+.job-phase-label {
+  font-size: 0.75rem;
+  color: var(--terminal-green);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 4px rgba(51, 255, 51, 0.3);
+}
+
+/* Audio toggle */
+.audio-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  transition: background 0.15s;
+}
+
+.audio-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Card reader animation */
+.card-thumbnail.card-reading {
+  border-color: var(--terminal-green) !important;
+  box-shadow: 0 0 10px rgba(51, 255, 51, 0.4);
+  animation: card-slide 0.3s ease-out;
+}
+
+.card-thumbnail.card-read {
+  opacity: 0.6;
+  filter: sepia(0.3) saturate(0.8);
+}
+
+@keyframes card-slide {
+  0% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
 }
 
 /* ---- Responsive ---- */

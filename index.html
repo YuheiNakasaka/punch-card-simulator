@@ -15,6 +15,9 @@
         >
       </div>
       <div class="header-toggles">
+        <button id="audio-toggle" class="audio-toggle" title="Toggle sound">
+          <span id="audio-label">Sound OFF</span>
+        </button>
         <button id="mode-toggle" class="mode-toggle" data-i18n-title="mode.tooltip" title="Toggle input mode">
           <span class="mode-option active" data-mode="easy">EASY</span>
           <span class="mode-divider">/</span>
@@ -183,11 +186,19 @@
       <button
         id="btn-run"
         class="btn btn-primary"
-        data-i18n="exec.run"
+        data-i18n="job.submitJob"
         data-i18n-title="tooltips.run"
-        title="Run entire program"
+        title="Submit job for execution"
       >
-        &#9654; Run
+        Submit Job
+      </button>
+      <button
+        id="btn-stop"
+        class="btn btn-danger hidden"
+        data-i18n="job.stopJob"
+        title="Stop current job"
+      >
+        Stop Job
       </button>
       <button
         id="btn-step"
@@ -207,6 +218,21 @@
       >
         Reset
       </button>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="speed-control">
+        <label class="speed-label" data-i18n="speed.label">Speed</label>
+        <select id="speed-select">
+          <option value="instant" data-i18n="speed.instant">Instant</option>
+          <option value="fast" data-i18n="speed.fast">Fast</option>
+          <option value="realistic" selected data-i18n="speed.realistic">Realistic</option>
+          <option value="slow" data-i18n="speed.slow">Slow</option>
+        </select>
+      </div>
+
+      <span id="job-phase" class="job-phase-label"></span>
+
       <span class="exec-helper-text" data-i18n="exec.helperText">
         Type to punch characters &bull; Click cells to toggle &bull; Arrow keys
         to navigate

@@ -64,6 +64,30 @@ export interface Translations {
     programError: string;
     unknownLabel: string;
     unknownInstruction: string;
+    abendDivZero: string;
+    abendLabelNotFound: string;
+    abendInvalidOp: string;
+    abendTimeLimit: string;
+    jobEndedOk: string;
+  };
+  job: {
+    submitJob: string;
+    stopJob: string;
+    submitting: string;
+    reading: string;
+    executing: string;
+    phaseLabel: string;
+  };
+  speed: {
+    label: string;
+    instant: string;
+    fast: string;
+    realistic: string;
+    slow: string;
+  };
+  audio: {
+    mute: string;
+    unmute: string;
   };
   encoding: {
     intro: string;
