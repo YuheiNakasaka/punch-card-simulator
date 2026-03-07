@@ -35,8 +35,8 @@ test.describe('Page Load & Initial State', () => {
 
   test('examples dropdown is populated', async ({ page }) => {
     const options = page.locator('#examples-select option');
-    // Default "Load Example..." + Hello World, Countdown, Calculator, Fibonacci
-    await expect(options).toHaveCount(5);
+    // Default "Load Example..." + 9 example programs
+    await expect(options).toHaveCount(10);
   });
 });
 

@@ -188,5 +188,10 @@ export const ja: Translations = {
     countdown: "\u30AB\u30A6\u30F3\u30C8\u30C0\u30A6\u30F3",
     calculator: "\u96FB\u5353",
     fibonacci: "\u30D5\u30A3\u30DC\u30CA\u30C3\u30C1",
+    multiTable: "\u4E5D\u4E5D\u306E\u8868",
+    bankLedger: "\u8907\u5229\u8A08\u7B97",
+    rocketTrajectory: "\u30ED\u30B1\u30C3\u30C8\u5F3E\u9053\u8A08\u7B97",
+    payrollBatch: "\u7D66\u4E0E\u8A08\u7B97\u30EC\u30DD\u30FC\u30C8",
+    piCalc: "\u5186\u5468\u7387\u8A08\u7B97",
   },
 };

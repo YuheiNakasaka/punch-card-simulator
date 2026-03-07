@@ -180,5 +180,10 @@ export const en: Translations = {
     countdown: "Countdown",
     calculator: "Calculator",
     fibonacci: "Fibonacci",
+    multiTable: "Times Table",
+    bankLedger: "Compound Interest",
+    rocketTrajectory: "Rocket Trajectory",
+    payrollBatch: "Payroll Report",
+    piCalc: "Pi Calculation",
   },
 };

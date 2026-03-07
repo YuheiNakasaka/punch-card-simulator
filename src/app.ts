@@ -159,13 +159,14 @@ export class App {
 
   private _setupInterpreter(): void {
     const output = getElementById('terminal-output');
+    const outputPanel = getElementById('tab-output');
 
     this.interpreter.onOutput = (text: string) => {
       const line = document.createElement('div');
       line.className = 'terminal-line';
       line.textContent = `> ${text}`;
       output.appendChild(line);
-      output.scrollTop = output.scrollHeight;
+      outputPanel.scrollTop = outputPanel.scrollHeight;
     };
 
     this.interpreter.onCharOutput = async (char: string) => {
@@ -178,7 +179,7 @@ export class App {
         output.appendChild(currentLine);
       }
       currentLine.textContent += char;
-      output.scrollTop = output.scrollHeight;
+      outputPanel.scrollTop = outputPanel.scrollHeight;
       playPrinterClick();
     };
 
@@ -224,13 +225,14 @@ export class App {
       line.className = 'terminal-line system';
       line.textContent = `--- ${message} ---`;
       output.appendChild(line);
-      output.scrollTop = output.scrollHeight;
+      outputPanel.scrollTop = outputPanel.scrollHeight;
       this._updateRunButtons();
     };
   }
 
   private _setupJobProcessor(): void {
     const output = getElementById('terminal-output');
+    const outputPanel = getElementById('tab-output');
     const phaseLabel = getElementById('job-phase');
 
     this.jobProcessor.onPhaseChange = (_phase, message) => {
@@ -243,7 +245,7 @@ export class App {
       line.className = 'terminal-line system';
       line.textContent = text;
       output.appendChild(line);
-      output.scrollTop = output.scrollHeight;
+      outputPanel.scrollTop = outputPanel.scrollHeight;
     };
 
     this.jobProcessor.onCardRead = (cardIndex: number) => {
