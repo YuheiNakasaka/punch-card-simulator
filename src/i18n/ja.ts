@@ -72,6 +72,30 @@ export const ja: Translations = {
     unknownLabel:
       "\u30A8\u30E9\u30FC: \u4E0D\u660E\u306A\u30E9\u30D9\u30EB '{label}'",
     unknownInstruction: "\u4E0D\u660E\u306A\u547D\u4EE4: {op}",
+    abendDivZero: "ABEND S0C7 - \u30C7\u30FC\u30BF\u4F8B\u5916 \u30AB\u30FC\u30C9 {n}",
+    abendLabelNotFound: "ABEND S806-04 - \u30E9\u30D9\u30EB\u672A\u691C\u51FA '{label}'",
+    abendInvalidOp: "ABEND S013-14 - \u4E0D\u6B63\u306A\u64CD\u4F5C '{op}'",
+    abendTimeLimit: "ABEND S122 - \u6642\u9593\u5236\u9650\u8D85\u904E",
+    jobEndedOk: "JOB \u7D42\u4E86 - COND CODE 0000",
+  },
+  job: {
+    submitJob: "\u30B8\u30E7\u30D6\u6295\u5165",
+    stopJob: "\u30B8\u30E7\u30D6\u505C\u6B62",
+    submitting: "\u30B8\u30E7\u30D6\u6295\u5165\u4E2D...",
+    reading: "{count} \u679A\u306E\u30AB\u30FC\u30C9\u3092\u8AAD\u307F\u53D6\u308A\u4E2D...",
+    executing: "\u5B9F\u884C\u4E2D...",
+    phaseLabel: "\u30D5\u30A7\u30FC\u30BA: {phase}",
+  },
+  speed: {
+    label: "\u901F\u5EA6",
+    instant: "\u5373\u6642",
+    fast: "\u9AD8\u901F",
+    realistic: "\u30EA\u30A2\u30EB",
+    slow: "\u4F4E\u901F",
+  },
+  audio: {
+    mute: "\u97F3\u58F0 OFF",
+    unmute: "\u97F3\u58F0 ON",
   },
   encoding: {
     intro:

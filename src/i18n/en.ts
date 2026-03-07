@@ -66,6 +66,30 @@ export const en: Translations = {
     programError: "Program error.",
     unknownLabel: "Error: Unknown label '{label}'",
     unknownInstruction: "Unknown instruction: {op}",
+    abendDivZero: "ABEND S0C7 - DATA EXCEPTION AT CARD {n}",
+    abendLabelNotFound: "ABEND S806-04 - LABEL NOT FOUND '{label}'",
+    abendInvalidOp: "ABEND S013-14 - INVALID OPERATION '{op}'",
+    abendTimeLimit: "ABEND S122 - TIME LIMIT EXCEEDED",
+    jobEndedOk: "JOB ENDED - COND CODE 0000",
+  },
+  job: {
+    submitJob: "Submit Job",
+    stopJob: "Stop Job",
+    submitting: "Submitting job...",
+    reading: "Reading {count} cards...",
+    executing: "Executing...",
+    phaseLabel: "Phase: {phase}",
+  },
+  speed: {
+    label: "Speed",
+    instant: "Instant",
+    fast: "Fast",
+    realistic: "Realistic",
+    slow: "Slow",
+  },
+  audio: {
+    mute: "Sound OFF",
+    unmute: "Sound ON",
   },
   encoding: {
     intro:
